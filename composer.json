@@ -17,6 +17,7 @@
         "webmozart/assert": "^1.11"
     },
     "require-dev": {
+        "deployer/deployer": "^7.0",
         "doctrine/coding-standard": "^10.0",
         "roave/security-advisories": "dev-latest",
         "squizlabs/php_codesniffer": "^3.7",
