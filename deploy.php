@@ -8,7 +8,7 @@ require 'recipe/composer.php';
 
 // Config
 
-set('repository', '~/cli-apps/re-notifier/repo');
+set('repository', 'git@github.com:andrewmy/re-notifier.git');
 
 add('shared_files', ['.env.local']);
 add('shared_dirs', ['var']);
@@ -25,19 +25,6 @@ host('andr.lv')
 after('deploy:failed', 'deploy:unlock');
 
 // Tasks
-
-task('deploy:update_code', function () {
-    $files = array_filter(
-        explode("\n", runLocally("ls -1a")),
-        fn (string $name) => !in_array($name, ['.', '..', '.git', '.idea', 'var', 'vendor'], true),
-    );
-
-    upload(
-        $files,
-        '{{release_path}}',
-        ['progress_bar' => false, 'options' => ['--relative']]
-    );
-});
 
 desc('Deploys your project');
 task('deploy', [
