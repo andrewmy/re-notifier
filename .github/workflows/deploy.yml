@@ -19,9 +19,21 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
+          tools: composer:v2
+
+      # TODO: remove when deployer.org/deployer.phar points to v7+
+      - name: Download latest Deployer
+        run: composer global require deployer/deployer --no-interaction --verbose --ansi
+
+      # TODO: remove when deployer.org/deployer.phar points to v7+
+      - name: Get composer global bin-dir path
+        id: composer-bin-dir
+        run: echo "::set-output name=path::$(composer global config bin-dir --absolute)"
 
       - name: Deploy
         uses: deployphp/action@v1.0.17
         with:
           dep: deploy
           private-key: ${{ secrets.PRIVATE_KEY }}
+          # TODO: remove when deployer.org/deployer.phar points to v7+
+          deployer-binary: ${{ steps.composer-bin-dir.outputs.path }}/dep
