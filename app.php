@@ -23,8 +23,7 @@ $app->add(
         $_ENV['DB_DSN'],
         new Logger(
             'main',
-            //[new StreamHandler('php://stdout')],
-            [new StreamHandler('file://var/log.log')],
+            [new StreamHandler($_ENV['LOG_DESTINATION'])],
         ),
     ),
 );

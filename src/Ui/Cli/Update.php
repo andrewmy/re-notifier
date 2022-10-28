@@ -18,6 +18,7 @@ use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 
 use function assert;
+use function number_format;
 use function sprintf;
 use function urlencode;
 
@@ -135,6 +136,14 @@ final class Update extends Command
                 number_format($ad->price, thousands_separator: ' '),
                 $ad->url,
             );
+
+            $this->logger->info('Found new ad', [
+                'street' => $ad->street,
+                'rooms' => $ad->rooms,
+                'space' => $ad->space,
+                'price' => $ad->price,
+                'url' => $ad->url,
+            ]);
 
             $client->post($this->tgUri . '&text=' . urlencode($message));
         }
