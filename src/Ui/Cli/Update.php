@@ -17,7 +17,6 @@ use Throwable;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 
-use function assert;
 use function number_format;
 use function sprintf;
 use function urlencode;
@@ -75,7 +74,6 @@ final class Update extends Command
         }
 
         foreach ($rssFeedXml->channel->item as $item) {
-            assert($item instanceof SimpleXMLElement);
             try {
                 Assert::isInstanceOf($item, SimpleXMLElement::class);
                 Assert::propertyExists($item, 'link');

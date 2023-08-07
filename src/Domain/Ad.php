@@ -60,8 +60,8 @@ final class Ad
 
     public function matches(): bool
     {
-        return $this->rooms >= 3
-            && $this->space >= 80
+        return $this->rooms >= 4
+            && $this->space >= 85
             && $this->price <= 260000;
     }
 }
