@@ -8,7 +8,7 @@
         "doctrine/dbal": "^3.5",
         "guzzlehttp/guzzle": "^7.5",
         "monolog/monolog": "^3.2",
-        "nesbot/carbon": "^2.62",
+        "nesbot/carbon": "^3.8",
         "psr/log": "^3.0",
         "symfony/cache": "^6.1",
         "symfony/console": "^6.1",
