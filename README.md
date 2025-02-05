@@ -7,7 +7,7 @@ Fetches RE ads from SS.lv and notifies about matches to the chosen Telegram chat
 1. Create a Telegram bot
 2. In `.env.local`, set the `TG_URI` env variable to `https://api.telegram.org/bot<X>:<Y>/sendMessage?chat_id=<Z>`, where `bot<X>:<Y>` is the API token and `<Z>` is the chat ID. [How to get the chat ID](https://sean-bradley.medium.com/get-telegram-chat-id-80b575520659).
 3. `composer install`
-4`./app.php update`
+4. `./app.php update`
 
 Works best from cron.
 
