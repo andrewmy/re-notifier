@@ -25,6 +25,11 @@ final class Ad
     public readonly string $street;
     public readonly string $description;
 
+    public readonly string $tdId;
+    public readonly int $priceMin;
+    public readonly int $priceMax;
+    public readonly DateTimeImmutable $firstSeenAt;
+
     private function __construct()
     {
         $this->id        = new Ulid();
@@ -63,5 +68,13 @@ final class Ad
         return $this->rooms >= 4
             && $this->space >= 85
             && $this->price <= 260000;
+    }
+
+    public function addHistory(string $tdId, int $priceMin, int $priceMax, DateTimeImmutable $firstSeenAt): void
+    {
+        $this->tdId        = $tdId;
+        $this->priceMin    = $priceMin;
+        $this->priceMax    = $priceMax;
+        $this->firstSeenAt = $firstSeenAt;
     }
 }

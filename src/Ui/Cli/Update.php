@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Ui\Cli;
 
 use App\Domain\Ad;
-use Doctrine\DBAL\DriverManager;
+use App\Domain\AdRepository;
+use Carbon\CarbonImmutable;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 use Psr\Log\LoggerInterface;
 use SimpleXMLElement;
 use Symfony\Component\Console\Command\Command;
@@ -17,10 +19,12 @@ use Throwable;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 
+use function json_decode;
 use function number_format;
 use function sprintf;
 use function urlencode;
 
+use const JSON_THROW_ON_ERROR;
 use const LIBXML_NOCDATA;
 
 final class Update extends Command
@@ -30,7 +34,7 @@ final class Update extends Command
     public function __construct(
         private string $tgUri,
         private string $rssUrl,
-        private string $dbDsn,
+        private AdRepository $adRepository,
         private LoggerInterface $logger,
     ) {
         parent::__construct('update');
@@ -38,27 +42,11 @@ final class Update extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $db = DriverManager::getConnection(['url' => $this->dbDsn]);
-        $db->executeQuery(
-            'CREATE TABLE IF NOT EXISTS ' . self::TABLE_NAME . ' ('
-            . 'id TEXT NOT NULL PRIMARY KEY, '
-            . 'updated_at INTEGER NOT NULL, '
-            . 'published_at INTEGER NOT NULL, '
-            . 'url TEXT NOT NULL, '
-            . 'rooms INTEGER NOT NULL, '
-            . '`space` INTEGER NOT NULL, '
-            . 'price INTEGER NOT NULL, '
-            . 'description TEXT NOT NULL '
-            . ')',
-        );
-        $db->executeQuery(
-            'CREATE UNIQUE INDEX IF NOT EXISTS ads_nat_key ON ads (url, description)',
-        );
-
-        $client = new Client();
+        $cookielessClient = new Client();
+        $tdClient         = new Client(['cookies' => true]);
 
         try {
-            $rssFeedBody = (string) $client->get($this->rssUrl)->getBody();
+            $rssFeedBody = (string) $cookielessClient->get($this->rssUrl)->getBody();
         } catch (GuzzleException $exception) {
             $this->logger->error('Could not fetch RSS feed: ' . $exception->getMessage());
 
@@ -71,6 +59,18 @@ final class Update extends Command
             $this->logger->error('Could not parse RSS feed: ' . $exception->getMessage());
 
             return 1;
+        }
+
+        $tdToken = null;
+        try {
+            $tdResponse = json_decode(
+                (string) $tdClient->get('https://api.tirgusdati.lv/api/user/me')->getBody(),
+                associative: true,
+                flags: JSON_THROW_ON_ERROR,
+            );
+            $tdToken    = $tdResponse['key'];
+        } catch (GuzzleException | JsonException $exception) {
+            $this->logger->error('Could not fetch TirgusDati token: ' . $exception->getMessage());
         }
 
         foreach ($rssFeedXml->channel->item as $item) {
@@ -91,12 +91,7 @@ final class Update extends Command
             $url         = (string) $item->link;
             $description = (string) $item->description;
 
-            $id = $db->fetchOne(
-                'SELECT id FROM ads WHERE url = ? AND description = ?',
-                [$url, $description],
-            );
-
-            if ($id !== false) {
+            if ($this->adRepository->exists($url, $description)) {
                 continue;
             }
 
@@ -110,29 +105,52 @@ final class Update extends Command
                 continue;
             }
 
-            $db->executeQuery(
-                'INSERT INTO ads ('
-                . 'id, updated_at, published_at, url, rooms, `space`, price, description'
-                . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [
-                    $ad->id->toBase58(),
-                    $ad->updatedAt->getTimestamp(),
-                    $ad->publishedAt->getTimestamp(),
-                    $ad->url,
-                    $ad->rooms,
-                    $ad->space,
-                    $ad->price,
-                    $ad->description,
-                ],
-            );
+            $this->adRepository->save($ad);
+
+            try {
+                $tdResponse = json_decode(
+                    (string) $tdClient->post('https://api.tirgusdati.lv/api/listings/history/search', [
+                        'headers' => ['Authorization' => 'Bearer ' . $tdToken],
+                        'json' => ['url' => $ad->url],
+                    ])->getBody(),
+                    associative: true,
+                    flags: JSON_THROW_ON_ERROR,
+                );
+
+                Assert::isArray($tdResponse);
+                Assert::keyExists($tdResponse, 'id');
+                Assert::keyExists($tdResponse, 'timeline');
+                Assert::isArray($tdResponse['timeline']);
+                Assert::keyExists($tdResponse['timeline'], 'price_min');
+                Assert::keyExists($tdResponse['timeline'], 'price_max');
+                Assert::keyExists($tdResponse['timeline'], 'first');
+
+                $ad->addHistory(
+                    (string) $tdResponse['id'],
+                    (int) $tdResponse['timeline']['price_min'],
+                    (int) $tdResponse['timeline']['price_max'],
+                    CarbonImmutable::createFromTimestamp($tdResponse['timeline']['first']),
+                );
+                $tdMessage = sprintf(
+                    "€ min: %s\n€ max: %s\nFirst seen: %s\nhttps://tirgusdati.lv/app/listings/history/%s",
+                    number_format($ad->priceMin, thousands_separator: ' '),
+                    number_format($ad->priceMax, thousands_separator: ' '),
+                    $ad->firstSeenAt->format('Y-m-d H:i:s'),
+                    $ad->tdId,
+                );
+            } catch (GuzzleException | JsonException | InvalidArgumentException $exception) {
+                $tdMessage = 'Could not fetch from TirgusDati: ' . $exception->getMessage();
+                $this->logger->error($tdMessage);
+            }
 
             $message = sprintf(
-                "%s\nK: %s\nm2: %s\n€: %s\n%s",
+                "%s\nK: %s\nm2: %s\n€: %s\n%s\n%s",
                 $ad->street,
                 $ad->rooms,
                 $ad->space,
                 number_format($ad->price, thousands_separator: ' '),
                 $ad->url,
+                $tdMessage,
             );
 
             $this->logger->info('Found new ad', [
@@ -141,9 +159,14 @@ final class Update extends Command
                 'space' => $ad->space,
                 'price' => $ad->price,
                 'url' => $ad->url,
+                'price_min' => $ad->priceMin ?? null,
+                'price_max' => $ad->priceMax ?? null,
+                'first_seen_at' => $ad->firstSeenAt ? $ad->firstSeenAt->format('Y-m-d H:i:s') : null,
             ]);
 
-            $client->post($this->tgUri . '&text=' . urlencode($message));
+            $cookielessClient->post($this->tgUri . '&text=' . urlencode($message));
+
+            die;
         }
 
         return 0;

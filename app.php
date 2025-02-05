@@ -3,6 +3,7 @@
 
 declare(strict_types=1);
 
+use App\Infrastructure\DbalAdRepository;
 use App\Ui\Cli\Update;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -20,7 +21,7 @@ $app->add(
     new Update(
         $_ENV['TG_URI'],
         $_ENV['RSS_URL'],
-        $_ENV['DB_DSN'],
+        new DbalAdRepository($_ENV['DB_DSN']),
         new Logger(
             'main',
             [new StreamHandler($_ENV['LOG_DESTINATION'])],
