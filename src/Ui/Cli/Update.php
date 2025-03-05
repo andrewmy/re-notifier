@@ -176,8 +176,6 @@ final class Update extends Command
             if ($doPostToTg) {
                 $cookielessClient->post($this->tgUri . '&text=' . urlencode($message));
             }
-
-            die;
         }
 
         return 0;
