@@ -29,8 +29,6 @@ use const LIBXML_NOCDATA;
 
 final class Update extends Command
 {
-    private const TABLE_NAME = 'ads';
-
     public function __construct(
         private string $tgUri,
         private string $rssUrl,
@@ -40,8 +38,18 @@ final class Update extends Command
         parent::__construct('update');
     }
 
+    protected function configure(): void
+    {
+        $this->addOption(
+            name: 'no-tg',
+            description: 'Do not post to Telegram',
+        );
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $doPostToTg = ! (bool) $input->getOption('no-tg');
+
         $cookielessClient = new Client();
         $tdClient         = new Client(['cookies' => true]);
 
@@ -164,7 +172,10 @@ final class Update extends Command
                 'first_seen_at' => $ad->firstSeenAt ? $ad->firstSeenAt->format('Y-m-d H:i:s') : null,
             ]);
 
-            $cookielessClient->post($this->tgUri . '&text=' . urlencode($message));
+            $this->logger->debug('Posting to Telegram', ['message' => $message]);
+            if ($doPostToTg) {
+                $cookielessClient->post($this->tgUri . '&text=' . urlencode($message));
+            }
 
             die;
         }
