@@ -3,6 +3,7 @@
 /phpunit.xml
 .phpunit.result.cache
 .phpcs-cache
+.deptrac.cache
 .idea
 .DS_Store
 /var/
