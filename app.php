@@ -15,6 +15,11 @@ require __DIR__ . '/vendor/autoload.php';
 $dotenv = new Dotenv();
 $dotenv->loadEnv(__DIR__ . '/.env');
 
+assert(is_string($_ENV['TG_URI']));
+assert(is_string($_ENV['RSS_URL']));
+assert(is_string($_ENV['DB_DSN']));
+assert(is_string($_ENV['LOG_DESTINATION']));
+
 $app = new Application();
 
 $app->addCommand(

@@ -64,7 +64,7 @@ final readonly class Ad
             $street = 'n/a';
         }
 
-        $obj->street      = $street;
+        $obj->street      = (string) $street;
         $obj->description = $description;
 
         return $obj;

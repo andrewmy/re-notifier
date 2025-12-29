@@ -69,21 +69,22 @@ final class Update extends Command
             return 1;
         }
 
-        $tdToken = null;
+        $tdToken = '';
         try {
             $tdResponse = json_decode(
                 (string) $tdClient->get('https://api.tirgusdati.lv/api/user/me')->getBody(),
                 associative: true,
                 flags: JSON_THROW_ON_ERROR,
             );
-            $tdToken    = $tdResponse['key'];
-        } catch (GuzzleException | JsonException $exception) {
+            Assert::isArray($tdResponse);
+            Assert::keyExists($tdResponse, 'key');
+            $tdToken = (string) $tdResponse['key'];
+        } catch (GuzzleException | JsonException | InvalidArgumentException $exception) {
             $this->logger->error('Could not fetch TirgusDati token: ' . $exception->getMessage());
         }
 
         foreach ($rssFeedXml->channel->item as $item) {
             try {
-                Assert::isInstanceOf($item, SimpleXMLElement::class);
                 Assert::propertyExists($item, 'link');
                 Assert::propertyExists($item, 'pubDate');
                 Assert::propertyExists($item, 'description');
@@ -146,7 +147,7 @@ final class Update extends Command
                     (string) $tdResponse['id'],
                     (int) $tdResponse['timeline']['price_min'],
                     (int) $tdResponse['timeline']['price_max'],
-                    CarbonImmutable::createFromTimestamp($tdResponse['timeline']['first']),
+                    CarbonImmutable::createFromTimestamp((string) $tdResponse['timeline']['first']),
                 );
                 $tdMessage = sprintf(
                     "€ min: %s\n€ max: %s\nFirst seen: %s\nhttps://tirgusdati.lv/app/listings/history/%s",
@@ -178,7 +179,7 @@ final class Update extends Command
                 'url' => $ad->url,
                 'price_min' => $ad->priceMin ?? null,
                 'price_max' => $ad->priceMax ?? null,
-                'first_seen_at' => $ad->firstSeenAt ? $ad->firstSeenAt->format('Y-m-d H:i:s') : null,
+                'first_seen_at' => $ad->firstSeenAt->format('Y-m-d H:i:s'),
             ]);
 
             $this->logger->debug('Posting to Telegram', ['message' => $message]);

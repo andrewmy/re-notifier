@@ -1,0 +1,13 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - app.php
+    tmpDir: var/phpstan
+    ignoreErrors:
+        -
+            identifiers:
+                - property.uninitializedReadonly
+                - property.readOnlyAssignNotInConstructor
+                - cast.string
+                - cast.int
