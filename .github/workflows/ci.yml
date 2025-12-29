@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.5
+          extensions: libxml, simplexml
+
+      - uses: ramsey/composer-install@v3
+
+      - run: make ci
+
+      - uses: nosborn/github-action-markdown-cli@v3.3.0
+        with:
+          files: README.md
