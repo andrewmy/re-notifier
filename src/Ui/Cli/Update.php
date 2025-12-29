@@ -30,10 +30,10 @@ use const LIBXML_NOCDATA;
 final class Update extends Command
 {
     public function __construct(
-        private string $tgUri,
-        private string $rssUrl,
-        private AdRepository $adRepository,
-        private LoggerInterface $logger,
+        private readonly string $tgUri,
+        private readonly string $rssUrl,
+        private readonly AdRepository $adRepository,
+        private readonly LoggerInterface $logger,
     ) {
         parent::__construct('update');
     }

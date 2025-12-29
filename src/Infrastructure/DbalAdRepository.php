@@ -10,7 +10,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 
-final class DbalAdRepository implements AdRepository
+final readonly class DbalAdRepository implements AdRepository
 {
     private const string TABLE_NAME = 'ads';
 

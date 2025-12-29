@@ -13,22 +13,22 @@ use function preg_replace;
 use function str_replace;
 use function trim;
 
-final class Ad
+final readonly class Ad
 {
-    public readonly Ulid $id;
-    public readonly DateTimeImmutable $updatedAt;
-    public readonly DateTimeImmutable $publishedAt;
-    public readonly string $url;
-    public readonly int $rooms;
-    public readonly int $space;
-    public readonly int $price;
-    public readonly string $street;
-    public readonly string $description;
+    public Ulid $id;
+    public DateTimeImmutable $updatedAt;
+    public DateTimeImmutable $publishedAt;
+    public string $url;
+    public int $rooms;
+    public int $space;
+    public int $price;
+    public string $street;
+    public string $description;
 
-    public readonly string $tdId;
-    public readonly int $priceMin;
-    public readonly int $priceMax;
-    public readonly DateTimeImmutable $firstSeenAt;
+    public string $tdId;
+    public int $priceMin;
+    public int $priceMax;
+    public DateTimeImmutable $firstSeenAt;
 
     private function __construct()
     {
@@ -57,10 +57,10 @@ final class Ad
         $obj->price = (int) str_replace(
             ',',
             '',
-            trim(preg_replace('/.*Цена: (<b>)+([\d,]*)\s*€(<\/b>)+.*/u', '$2', $singleLineDescription)),
+            trim((string) preg_replace('/.*Цена: (<b>)+([\d,]*)\s*€(<\/b>)+.*/u', '$2', $singleLineDescription)),
         );
         $street     = preg_replace('/.*Улица: (<b>)+(.*)(<\/b>)+<br\/>К.*/u', '$2', $singleLineDescription);
-        if (preg_match('/.*[<=].*/', $street)) {
+        if (preg_match('/.*[<=].*/', (string) $street)) {
             $street = 'n/a';
         }
 
