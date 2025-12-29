@@ -17,7 +17,7 @@
         "webmozart/assert": "^1.11"
     },
     "require-dev": {
-        "deployer/deployer": "^7.0",
+        "deployer/deployer": "v8.0.0-alpha.3",
         "deptrac/deptrac": "^4.0",
         "doctrine/coding-standard": "^14.0",
         "phpstan/phpstan": "^2.1",

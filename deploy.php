@@ -8,7 +8,8 @@ require 'recipe/composer.php';
 
 // Config
 
-set('repository', 'git@github.com:andrewmy/re-notifier.git');
+// uncomment when deploying to an outside server
+// set('repository', 'git@github.com:andrewmy/re-notifier.git');
 
 add('shared_files', ['.env.local']);
 add('shared_dirs', ['var']);
@@ -16,9 +17,9 @@ add('writable_dirs', ['var']);
 
 // Hosts
 
-host('andr.lv')
+host('pi5')
     ->set('remote_user', 'andr')
-    ->set('deploy_path', '~/cli-apps/re-notifier');
+    ->set('deploy_path', '~/Apps/re-notifier');
 
 // Hooks
 

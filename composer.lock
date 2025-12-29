@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6b3f977186dd3e967f76ac38197da443",
+    "content-hash": "f20eefd7433654ce722701db3b0822ab",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -2564,24 +2564,26 @@
         },
         {
             "name": "deployer/deployer",
-            "version": "v7.5.12",
+            "version": "v8.0.0-alpha.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/deployphp/deployer.git",
-                "reference": "efc71dac9ccc86b3f9946e75d50cb106b775aae2"
+                "reference": "b4dba6852af10223224f4fdbb223598dfff0d378"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/deployphp/deployer/zipball/efc71dac9ccc86b3f9946e75d50cb106b775aae2",
-                "reference": "efc71dac9ccc86b3f9946e75d50cb106b775aae2",
+                "url": "https://api.github.com/repos/deployphp/deployer/zipball/b4dba6852af10223224f4fdbb223598dfff0d378",
+                "reference": "b4dba6852af10223224f4fdbb223598dfff0d378",
                 "shasum": ""
             },
             "require": {
-                "ext-json": "*",
-                "php": "^8.0|^7.3"
+                "php": ">=8.2",
+                "symfony/console": "^7.2",
+                "symfony/process": "^7.2",
+                "symfony/yaml": "^7.2"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.64",
+                "friendsofphp/php-cs-fixer": "^3.68",
                 "pestphp/pest": "^3.3",
                 "phpstan/phpstan": "^1.4",
                 "phpunit/php-code-coverage": "^11.0",
@@ -2591,6 +2593,15 @@
                 "bin/dep"
             ],
             "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php",
+                    "src/Support/helpers.php"
+                ],
+                "psr-4": {
+                    "Deployer\\": "src/"
+                }
+            },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2614,7 +2625,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-02-19T16:45:27+00:00"
+            "time": "2025-10-28T10:45:41+00:00"
         },
         {
             "name": "deptrac/deptrac",
@@ -4915,6 +4926,71 @@
             "time": "2025-11-05T05:42:40+00:00"
         },
         {
+            "name": "symfony/process",
+            "version": "v7.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/process.git",
+                "reference": "7ca8dc2d0dcf4882658313aba8be5d9fd01026c8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/process/zipball/7ca8dc2d0dcf4882658313aba8be5d9fd01026c8",
+                "reference": "7ca8dc2d0dcf4882658313aba8be5d9fd01026c8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Process\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Executes commands in sub-processes",
+            "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/process/tree/v7.4.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-10-16T11:21:06+00:00"
+        },
+        {
             "name": "symfony/var-dumper",
             "version": "v8.0.0",
             "source": {
@@ -5161,6 +5237,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "deployer/deployer": 15,
         "roave/security-advisories": 20
     },
     "prefer-stable": false,

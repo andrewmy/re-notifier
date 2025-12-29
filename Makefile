@@ -32,3 +32,7 @@ stan: # Run static analysis
 .PHONY: markdown
 markdown: # Lint markdown, don't look at externally sourced files
 	markdownlint README.md
+
+.PHONY: deploy
+deploy: # Deploy to the configured server
+	php vendor/bin/dep deploy
