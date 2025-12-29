@@ -100,6 +100,8 @@ final class Update extends Command
             $description = (string) $item->description;
 
             if ($this->adRepository->exists($url, $description)) {
+                $this->logger->debug('Ad already exists', ['url' => $url]);
+
                 continue;
             }
 
@@ -110,6 +112,12 @@ final class Update extends Command
             );
 
             if (! $ad->matches()) {
+                $this->logger->debug('Ad does not match', [
+                    'rooms' => $ad->rooms,
+                    'space' => $ad->space,
+                    'price' => $ad->price,
+                ]);
+
                 continue;
             }
 
@@ -173,9 +181,11 @@ final class Update extends Command
             ]);
 
             $this->logger->debug('Posting to Telegram', ['message' => $message]);
-            if ($doPostToTg) {
-                $cookielessClient->post($this->tgUri . '&text=' . urlencode($message));
+            if (! $doPostToTg) {
+                continue;
             }
+
+            $cookielessClient->post($this->tgUri . '&text=' . urlencode($message));
         }
 
         return 0;

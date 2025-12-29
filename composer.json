@@ -2,7 +2,7 @@
     "name": "andrewmy/re-notifier",
     "type": "project",
     "require": {
-        "php": "^8.1",
+        "php": "^8.5",
         "ext-libxml": "*",
         "ext-simplexml": "*",
         "doctrine/dbal": "^3.5",
@@ -39,10 +39,7 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
-        "sort-packages": true,
-        "platform": {
-            "php": "8.1"
-        }
+        "sort-packages": true
     },
     "replace": {
         "symfony/polyfill-php81": "*",

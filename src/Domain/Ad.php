@@ -45,14 +45,21 @@ final class Ad
         $obj->publishedAt      = CarbonImmutable::createFromTimeString($publishedAt);
         $obj->url              = $url;
         $singleLineDescription = str_replace("\n", '', $description);
-        $obj->rooms            = (int) preg_replace('/.*К.: <b>(\d*)<\/b>.*/', '$1', $singleLineDescription);
-        $obj->space            = (int) preg_replace('/.*m2: <b>(\d*)<\/b>.*/', '$1', $singleLineDescription);
-        $obj->price            = (int) str_replace(
+        $obj->rooms            = (int) preg_replace('/.*К.: <b>(\d*)<\/b>.*/u', '$1', $singleLineDescription);
+
+        $space = (int) preg_replace('/.*m2: <b>(\d*)<\/b>.*/', '$1', $singleLineDescription);
+        if ($space === 0) {
+            $space = (int) preg_replace('/.*м²: <b>(\d*)<\/b>.*/u', '$1', $singleLineDescription);
+        }
+
+        $obj->space = $space;
+
+        $obj->price = (int) str_replace(
             ',',
             '',
-            trim(preg_replace('/.*Цена: <b>([\d,]*)\s*€<\/b>.*/', '$1', $singleLineDescription)),
+            trim(preg_replace('/.*Цена: <b>([\d,]*)\s*€<\/b>.*/u', '$1', $singleLineDescription)),
         );
-        $street                = preg_replace('/.*Улица: <b>(.*)<\/b><br\/>К.*/', '$1', $singleLineDescription);
+        $street     = preg_replace('/.*Улица: <b>(.*)<\/b><br\/>К.*/u', '$1', $singleLineDescription);
         if (preg_match('/.*[<=].*/', $street)) {
             $street = 'n/a';
         }
