@@ -17,7 +17,7 @@ $dotenv->loadEnv(__DIR__ . '/.env');
 
 $app = new Application();
 
-$app->add(
+$app->addCommand(
     new Update(
         $_ENV['TG_URI'],
         $_ENV['RSS_URL'],

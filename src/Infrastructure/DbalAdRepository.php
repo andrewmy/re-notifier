@@ -8,6 +8,7 @@ use App\Domain\Ad;
 use App\Domain\AdRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 
 final class DbalAdRepository implements AdRepository
 {
@@ -18,7 +19,7 @@ final class DbalAdRepository implements AdRepository
     public function __construct(
         string $dbDsn,
     ) {
-        $this->db = DriverManager::getConnection(['url' => $dbDsn]);
+        $this->db = DriverManager::getConnection(new DsnParser()->parse($dbDsn));
         $this->db->executeQuery(
             'CREATE TABLE IF NOT EXISTS ' . self::TABLE_NAME . ' ('
             . 'id TEXT NOT NULL PRIMARY KEY, '
