@@ -116,6 +116,7 @@ final class Update extends Command
                     'rooms' => $ad->rooms,
                     'space' => $ad->space,
                     'price' => $ad->price,
+                    'description' => $ad->rooms === 0 || $ad->space === 0 || $ad->price === 0 ? $ad->description : '-',
                 ]);
 
                 continue;
