@@ -11,7 +11,7 @@ use Doctrine\DBAL\DriverManager;
 
 final class DbalAdRepository implements AdRepository
 {
-    private const TABLE_NAME = 'ads';
+    private const string TABLE_NAME = 'ads';
 
     private Connection $db;
 
