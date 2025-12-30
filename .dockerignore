@@ -1,0 +1,17 @@
+.git
+.github
+.idea
+.claude
+var/
+vendor/
+.env
+.env.local
+.phpcs-cache
+.deptrac.cache
+phpstan.neon
+deptrac.yaml
+rector.php
+phpcs.xml
+composer-dependency-analyser.php
+Makefile
+*.md

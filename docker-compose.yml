@@ -1,0 +1,9 @@
+services:
+  re-notifier:
+    image: ghcr.io/andrewmy/re-notifier:latest
+    container_name: re-notifier
+    restart: unless-stopped
+    volumes:
+      - ./var:/app/var
+      - ./.env:/app/.env
+      - ./crontab:/app/crontab

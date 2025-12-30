@@ -36,3 +36,11 @@ markdown: # Lint markdown, don't look at externally sourced files
 .PHONY: deploy
 deploy: # Deploy to the configured server
 	php vendor/bin/dep deploy
+
+.PHONY: docker-build
+docker-build: # Build and push multi-arch Docker image to GHCR
+	docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/andrewmy/re-notifier:latest --push .
+
+.PHONY: deploy-docker
+deploy-docker: # Deploy Docker stack to pi5
+	php vendor/bin/dep deploy-docker pi
