@@ -1,6 +1,6 @@
-LABEL org.opencontainers.image.source = "https://github.com/andrewmy/re-notifier"
-
 FROM php:8.5.1-cli-alpine
+
+LABEL org.opencontainers.image.source = "https://github.com/andrewmy/re-notifier"
 
 RUN apk add --no-cache \
         sqlite-dev \
