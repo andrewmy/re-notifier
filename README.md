@@ -30,10 +30,11 @@ To replicate this experience:
 
 ## Docker Deployment
 
-The Docker image is automatically built and pushed to `ghcr.io/andrewmy/re-notifier:latest` on every push to `main`.
-It supports both amd64 and arm64 architectures.
+The Docker image is automatically built and pushed to `ghcr.io/andrewmy/re-notifier:latest`
+on every push to `main`. It supports both amd64 and arm64 architectures.
 
-The container runs a cron job every 5 minutes to check for new ads, the schedule is editable in the `crontab` file.
+The container runs a cron job every 5 minutes to check for new ads, the schedule is editable in the
+`crontab` file.
 
 ### Without Deployer
 
@@ -66,6 +67,7 @@ The container runs a cron job every 5 minutes to check for new ads, the schedule
     ```
 
 This will:
+
 - Sync `docker-compose.yml` to the server
 - Upload local files if they don't exist on remote: `.env.local` => `.env`, `var/db.sqlite`, `crontab`
 - Pull the latest image and restart the container
