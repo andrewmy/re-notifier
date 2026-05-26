@@ -21,8 +21,10 @@
         "deptrac/deptrac": "^4.0",
         "doctrine/coding-standard": "^14.0",
         "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^13.1",
         "rector/rector": "^2.3",
         "roave/security-advisories": "dev-latest",
+        "rregeer/phpunit-coverage-check": "^0.3.1",
         "shipmonk/composer-dependency-analyser": "^1.8",
         "squizlabs/php_codesniffer": "^4.0",
         "symfony/var-dumper": "8.0.*"
@@ -31,6 +33,11 @@
     "autoload": {
         "psr-4": {
             "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
         }
     },
     "authors": [

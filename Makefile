@@ -2,8 +2,10 @@
 help: # Show help for each of the Makefile recipes.
 	@grep -E '^[a-zA-Z0-9 -]+:.*#'  Makefile | sort | while read -r l; do printf "\033[1;32m$$(echo $$l | cut -f 1 -d':')\033[00m:$$(echo $$l | cut -f 2- -d'#')\n"; done
 
+COVERAGE_MIN ?= 35
+
 .PHONY: ci
-ci: composer-validate cbf require-check stan deptrac security-check # Full flow
+ci: composer-validate cbf require-check test coverage stan deptrac security-check # Full flow
 
 .PHONY: deptrac
 deptrac: # Check dependencies bgetween layers
@@ -28,6 +30,16 @@ cbf: # Fix code style
 .PHONY: stan
 stan: # Run static analysis
 	php vendor/bin/phpstan --memory-limit=-1
+
+.PHONY: test
+test: # Run PHPUnit
+	php vendor/bin/phpunit
+
+.PHONY: coverage
+coverage: # Run PHPUnit coverage gate
+	mkdir -p var/coverage
+	php vendor/bin/phpunit --coverage-clover var/coverage/clover.xml
+	php vendor/bin/coverage-check var/coverage/clover.xml $(COVERAGE_MIN)
 
 .PHONY: markdown
 markdown: # Lint markdown, don't look at externally sourced files
