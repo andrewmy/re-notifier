@@ -27,8 +27,8 @@ host('your-ssh-host')
     ->set('remote_user', 'your-ssh-user')
     ->set('deploy_path', '~/apps/re-notifier');
 
-host('pi')
-    ->set('hostname', 'pi5.local')
+host('reservoir')
+    ->set('hostname', 'reservoir.local')
     ->set('remote_user', 'andr')
     ->set('deploy_path', '/opt/stacks/re-notifier');
 
