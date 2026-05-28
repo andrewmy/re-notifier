@@ -103,7 +103,7 @@ final class AdTest extends TestCase
         $ad = Ad::fromData(
             'Thu, 28 May 2026 16:38:34 +0300',
             'https://www.ss.com/msg/ru/real-estate/flats/riga/centre/bcleon.html',
-            <<<HTML
+            <<<'HTML'
 Улица: <b><b>Миера 5</b></b><br/>
 К.: <b><b>4</b></b><br/>
 м²: <b><b>100</b></b><br/>

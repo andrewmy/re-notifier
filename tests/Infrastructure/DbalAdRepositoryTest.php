@@ -9,15 +9,22 @@ use App\Infrastructure\DbalAdRepository;
 use App\Tests\Support\SsLvDescription;
 use PHPUnit\Framework\TestCase;
 
+use function file_exists;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
+
 final class DbalAdRepositoryTest extends TestCase
 {
-    private ?string $dbFile = null;
+    private string|null $dbFile = null;
 
     protected function tearDown(): void
     {
-        if ($this->dbFile !== null && file_exists($this->dbFile)) {
-            unlink($this->dbFile);
+        if ($this->dbFile === null || ! file_exists($this->dbFile)) {
+            return;
         }
+
+        unlink($this->dbFile);
     }
 
     public function testExistsIsFalseBeforeSaveAndTrueAfterSave(): void

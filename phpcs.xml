@@ -9,10 +9,12 @@
     <arg value="nps"/>
 
     <file>./src/</file>
+    <file>./tests/</file>
     <file>./app.php</file>
     <file>./deploy.php</file>
 
     <rule ref="Doctrine"/>
+    <rule ref="Generic.Files.OneObjectStructurePerFile"/>
 
     <rule ref="SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingNativeTypeHint">
         <exclude-pattern>src/Ui/Cli/Update.php</exclude-pattern>
