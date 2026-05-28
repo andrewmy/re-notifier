@@ -2,6 +2,7 @@ parameters:
     level: max
     paths:
         - src
+        - tests
         - app.php
     tmpDir: var/phpstan
     ignoreErrors:
