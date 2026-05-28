@@ -9,8 +9,10 @@ use DateTimeImmutable;
 use Symfony\Component\Uid\Ulid;
 
 use function preg_match;
+use function preg_quote;
 use function preg_replace;
 use function str_replace;
+use function strip_tags;
 use function trim;
 
 final readonly class Ad
@@ -45,29 +47,51 @@ final readonly class Ad
         $obj->publishedAt      = CarbonImmutable::createFromTimeString($publishedAt);
         $obj->url              = $url;
         $singleLineDescription = str_replace("\n", '', $description);
-        $obj->rooms            = (int) preg_replace('/.*К.: (<b>)+(\d*)(<\/b>)+.*/u', '$2', $singleLineDescription);
+        $obj->rooms            = self::integerField($singleLineDescription, 'К.');
 
-        $space = (int) preg_replace('/.*m2: (<b>)+(\d*)(<\/b>)+.*/', '$2', $singleLineDescription);
+        $space = self::integerField($singleLineDescription, 'm2');
         if ($space === 0) {
-            $space = (int) preg_replace('/.*м²: (<b>)+(\d*)(<\/b>)+.*/u', '$2', $singleLineDescription);
+            $space = self::integerField($singleLineDescription, 'м²');
         }
 
         $obj->space = $space;
 
-        $obj->price = (int) str_replace(
-            ',',
+        $obj->price = (int) preg_replace(
+            '/\D/u',
             '',
-            trim((string) preg_replace('/.*Цена: (<b>)+([\d,]*)\s*€(<\/b>)+.*/u', '$2', $singleLineDescription)),
+            self::fieldText($singleLineDescription, 'Цена'),
         );
-        $street     = preg_replace('/.*Улица: (<b>)+(.*)(<\/b>)+<br\/>К.*/u', '$2', $singleLineDescription);
-        if (preg_match('/.*[<=].*/', (string) $street)) {
+        $street     = self::fieldText($singleLineDescription, 'Улица');
+        if ($street === '' || preg_match('/.*[<=].*/', $street)) {
             $street = 'n/a';
         }
 
-        $obj->street      = (string) $street;
+        $obj->street      = $street;
         $obj->description = $description;
 
         return $obj;
+    }
+
+    private static function integerField(string $description, string $label): int
+    {
+        return (int) preg_replace(
+            '/\D/u',
+            '',
+            self::fieldText($description, $label),
+        );
+    }
+
+    private static function fieldText(string $description, string $label): string
+    {
+        if (! preg_match('/' . preg_quote($label, '/') . ':\s*(.*?)(?:<br\/>|$)/u', $description, $matches)) {
+            return '';
+        }
+
+        return trim(str_replace(
+            ',',
+            '',
+            strip_tags($matches[1]),
+        ));
     }
 
     public function matches(): bool

@@ -80,4 +80,24 @@ final class AdTest extends TestCase
 
         self::assertSame('n/a', $ad->street);
     }
+
+    public function testNestedBoldTagsInRssValuesAreParsed(): void
+    {
+        $ad = Ad::fromData(
+            'Thu, 28 May 2026 16:38:34 +0300',
+            'https://www.ss.com/msg/ru/real-estate/flats/riga/centre/bcleon.html',
+            <<<HTML
+Улица: <b><b>Миера 5</b></b><br/>
+К.: <b><b>4</b></b><br/>
+м²: <b><b>100</b></b><br/>
+Цена: <b><b>330,000</b>  €</b>
+HTML,
+        );
+
+        self::assertSame('Миера 5', $ad->street);
+        self::assertSame(4, $ad->rooms);
+        self::assertSame(100, $ad->space);
+        self::assertSame(330000, $ad->price);
+        self::assertFalse($ad->matches());
+    }
 }
