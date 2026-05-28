@@ -3,8 +3,11 @@
 
 declare(strict_types=1);
 
+use App\Application\TelegramNotifier;
 use App\Infrastructure\DbalAdRepository;
 use App\Ui\Cli\Update;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\HttpFactory;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Symfony\Component\Console\Application;
@@ -20,17 +23,26 @@ assert(is_string($_ENV['RSS_URL']));
 assert(is_string($_ENV['DB_DSN']));
 assert(is_string($_ENV['LOG_DESTINATION']));
 
-$app = new Application();
+$app         = new Application();
+$logger      = new Logger(
+    'main',
+    [new StreamHandler($_ENV['LOG_DESTINATION'])],
+);
+$httpClient  = new Client();
+$httpFactory = new HttpFactory();
 
 $app->addCommand(
     new Update(
-        $_ENV['TG_URI'],
         $_ENV['RSS_URL'],
         new DbalAdRepository($_ENV['DB_DSN']),
-        new Logger(
-            'main',
-            [new StreamHandler($_ENV['LOG_DESTINATION'])],
+        new TelegramNotifier(
+            $_ENV['TG_URI'],
+            $httpClient,
+            $httpFactory,
+            $httpFactory,
+            $logger,
         ),
+        $logger,
     ),
 );
 

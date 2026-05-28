@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ui\Cli;
 
+use App\Application\TelegramNotifier;
 use App\Domain\Ad;
 use App\Domain\AdRepository;
 use Carbon\CarbonImmutable;
@@ -22,7 +23,6 @@ use Webmozart\Assert\InvalidArgumentException;
 use function json_decode;
 use function number_format;
 use function sprintf;
-use function urlencode;
 
 use const JSON_THROW_ON_ERROR;
 use const LIBXML_NOCDATA;
@@ -30,9 +30,9 @@ use const LIBXML_NOCDATA;
 final class Update extends Command
 {
     public function __construct(
-        private readonly string $tgUri,
         private readonly string $rssUrl,
         private readonly AdRepository $adRepository,
+        private readonly TelegramNotifier $telegramNotifier,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct('update');
@@ -162,12 +162,12 @@ final class Update extends Command
             }
 
             $message = sprintf(
-                "%s\nK: %s\nm2: %s\n€: %s\n%s\n%s",
+                "%s\n%s\nK: %s | m2: %s | EUR: %s\n%s",
+                $ad->url,
                 $ad->street,
                 $ad->rooms,
                 $ad->space,
                 number_format($ad->price, thousands_separator: ' '),
-                $ad->url,
                 $tdMessage,
             );
 
@@ -180,6 +180,7 @@ final class Update extends Command
                 'price_min' => $ad->priceMin ?? null,
                 'price_max' => $ad->priceMax ?? null,
                 'first_seen_at' => $ad->firstSeenAt->format('Y-m-d H:i:s'),
+                'image_url' => $ad->imageUrl,
             ]);
 
             $this->logger->debug('Posting to Telegram', ['message' => $message]);
@@ -187,7 +188,7 @@ final class Update extends Command
                 continue;
             }
 
-            $cookielessClient->post($this->tgUri . '&text=' . urlencode($message));
+            $this->telegramNotifier->send($message, $ad->imageUrl);
         }
 
         return 0;

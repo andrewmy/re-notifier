@@ -26,6 +26,7 @@ final readonly class Ad
     public int $price;
     public string $street;
     public string $description;
+    public string|null $imageUrl;
 
     public string $tdId;
     public int $priceMin;
@@ -68,8 +69,18 @@ final readonly class Ad
 
         $obj->street      = $street;
         $obj->description = $description;
+        $obj->imageUrl    = self::imageUrl($description);
 
         return $obj;
+    }
+
+    private static function imageUrl(string $description): string|null
+    {
+        if (! preg_match('/<img\b[^>]*\bsrc=(["\']?)(https?:\/\/[^"\'\s>]+)\1/iu', $description, $matches)) {
+            return null;
+        }
+
+        return $matches[2];
     }
 
     private static function integerField(string $description, string $label): int

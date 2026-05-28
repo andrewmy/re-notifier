@@ -22,7 +22,24 @@ final class AdTest extends TestCase
         self::assertSame(90, $ad->space);
         self::assertSame(250000, $ad->price);
         self::assertSame('Brivibas', $ad->street);
+        self::assertNull($ad->imageUrl);
         self::assertTrue($ad->matches());
+    }
+
+    public function testFirstRssImageUrlIsParsed(): void
+    {
+        $ad = Ad::fromData(
+            '2026-01-01 12:00:00',
+            'https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/with-image.html',
+            SsLvDescription::apartment(
+                imageUrl: 'https://i.ss.com/gallery/8/1503/375702/75140261.t.jpg',
+            ),
+        );
+
+        self::assertSame(
+            'https://i.ss.com/gallery/8/1503/375702/75140261.t.jpg',
+            $ad->imageUrl,
+        );
     }
 
     public function testTooFewRoomsDoesNotMatch(): void
