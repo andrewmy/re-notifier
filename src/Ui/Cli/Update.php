@@ -162,7 +162,7 @@ final class Update extends Command
             }
 
             $message = sprintf(
-                "%s\n%s\nK: %s | m2: %s | EUR: %s\n%s",
+                "%s\n%s\nK: %s \nm2: %s \n€: %s\n%s",
                 $ad->url,
                 $ad->street,
                 $ad->rooms,
