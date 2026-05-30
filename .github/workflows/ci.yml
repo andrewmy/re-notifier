@@ -19,7 +19,9 @@ jobs:
 
       - uses: ramsey/composer-install@v3
 
-      - run: make ci
+      - uses: taiki-e/install-action@just
+
+      - run: just ci
 
       - uses: nosborn/github-action-markdown-cli@v3.3.0
         with:

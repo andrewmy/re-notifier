@@ -82,8 +82,8 @@ The container runs a cron job every 5 minutes to check for new ads, the schedule
 2. Run the deployment:
 
     ```shell
-    make docker-build
-    make deploy-docker
+    just docker-build
+    just deploy-docker
     ```
 
 This will:
