@@ -16,7 +16,7 @@ use function str_replace;
 use function strlen;
 use function substr;
 
-final readonly class TelegramNotifier
+final readonly class TelegramNotifier implements Notifier
 {
     private const int CAPTION_LIMIT = 1024;
 

@@ -15,7 +15,7 @@ require 'recipe/composer.php';
 // uncomment when deploying to an outside server
 // set('repository', 'git@github.com:andrewmy/re-notifier.git');
 
-add('shared_files', ['.env.local']);
+add('shared_files', ['.env.local', 'config/watch_profiles.local.php']);
 add('shared_dirs', ['var']);
 add('writable_dirs', ['var']);
 
@@ -103,6 +103,16 @@ task('docker:env-upload', static function (): void {
     );
 });
 
+desc('Upload watch_profiles.local.php if remote does not exist');
+task('docker:profiles-upload', static function (): void {
+    uploadIfNotExists(
+        __DIR__ . '/config/watch_profiles.local.php',
+        '{{deploy_path}}/config/watch_profiles.local.php',
+        'watch profiles config',
+        'config',
+    );
+});
+
 desc('Upload crontab if remote file does not exist');
 task('docker:crontab-upload', static function (): void {
     uploadIfNotExists(
@@ -131,6 +141,7 @@ task('deploy-docker', [
     'docker:sync-compose',
     'docker:db-upload',
     'docker:env-upload',
+    'docker:profiles-upload',
     'docker:crontab-upload',
     'docker:pull',
     'docker:up',

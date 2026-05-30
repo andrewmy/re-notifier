@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Ui\Cli;
 
-use App\Application\TelegramNotifier;
-use App\Domain\Ad;
-use App\Domain\AdRepository;
-use Carbon\CarbonImmutable;
+use App\Application\ListingEnricher;
+use App\Application\Notifier;
+use App\Domain\Category;
+use App\Domain\Listing;
+use App\Domain\ListingRepository;
+use App\Domain\WatchProfile;
+use App\Infrastructure\SsLv\SsLvParser;
+use App\Infrastructure\SsLv\SsLvRssItem;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use JsonException;
 use Psr\Log\LoggerInterface;
 use SimpleXMLElement;
 use Symfony\Component\Console\Command\Command;
@@ -20,20 +23,28 @@ use Throwable;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 
-use function json_decode;
+use function implode;
+use function md5;
 use function number_format;
 use function sprintf;
+use function str_replace;
 
-use const JSON_THROW_ON_ERROR;
 use const LIBXML_NOCDATA;
 
 final class Update extends Command
 {
+    /**
+     * @param list<WatchProfile>        $watchProfiles
+     * @param array<string, SsLvParser> $parsers
+     */
     public function __construct(
-        private readonly string $rssUrl,
-        private readonly AdRepository $adRepository,
-        private readonly TelegramNotifier $telegramNotifier,
+        private readonly array $watchProfiles,
+        private readonly array $parsers,
+        private readonly ListingRepository $listingRepository,
+        private readonly Notifier $notifier,
+        private readonly ListingEnricher $enricher,
         private readonly LoggerInterface $logger,
+        private readonly Client $rssClient,
     ) {
         parent::__construct('update');
     }
@@ -41,156 +52,140 @@ final class Update extends Command
     protected function configure(): void
     {
         $this->addOption(
-            name: 'no-tg',
-            description: 'Do not post to Telegram',
+            name: 'dry-run',
+            description: 'Do not send Telegram notifications and do not save revisions',
         );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $doPostToTg = ! (bool) $input->getOption('no-tg');
+        $dryRun = (bool) $input->getOption('dry-run');
 
-        $cookielessClient = new Client();
-        $tdClient         = new Client(['cookies' => true]);
+        foreach ($this->watchProfiles as $profile) {
+            $parser = $this->parsers[$profile->category->value]
+                ?? throw new InvalidArgumentException('No parser for category ' . $profile->category->value);
 
-        try {
-            $rssFeedBody = (string) $cookielessClient->get($this->rssUrl)->getBody();
-        } catch (GuzzleException $exception) {
-            $this->logger->error('Could not fetch RSS feed: ' . $exception->getMessage());
-
-            return 1;
-        }
-
-        try {
-            $rssFeedXml = new SimpleXMLElement($rssFeedBody, LIBXML_NOCDATA);
-        } catch (Throwable $exception) {
-            $this->logger->error('Could not parse RSS feed: ' . $exception->getMessage());
-
-            return 1;
-        }
-
-        $tdToken = '';
-        try {
-            $tdResponse = json_decode(
-                (string) $tdClient->get('https://api.tirgusdati.lv/api/user/me')->getBody(),
-                associative: true,
-                flags: JSON_THROW_ON_ERROR,
-            );
-            Assert::isArray($tdResponse);
-            Assert::keyExists($tdResponse, 'key');
-            $tdToken = (string) $tdResponse['key'];
-        } catch (GuzzleException | JsonException | InvalidArgumentException $exception) {
-            $this->logger->error('Could not fetch TirgusDati token: ' . $exception->getMessage());
-        }
-
-        foreach ($rssFeedXml->channel->item as $item) {
             try {
-                Assert::propertyExists($item, 'link');
-                Assert::propertyExists($item, 'pubDate');
-                Assert::propertyExists($item, 'description');
-            } catch (InvalidArgumentException $exception) {
-                $this->logger->warning(
-                    'Bad RSS item',
-                    ['message' => $exception->getMessage()],
-                );
+                $rssFeedBody = (string) $this->rssClient->get($profile->rssUrl)->getBody();
+            } catch (GuzzleException $exception) {
+                $this->logger->error('Could not fetch RSS feed: ' . $exception->getMessage());
 
-                continue;
+                return 1;
             }
 
-            $url         = (string) $item->link;
-            $description = (string) $item->description;
+            try {
+                $rssFeedXml = new SimpleXMLElement($rssFeedBody, LIBXML_NOCDATA);
+            } catch (Throwable $exception) {
+                $this->logger->error('Could not parse RSS feed: ' . $exception->getMessage());
 
-            if ($this->adRepository->exists($url, $description)) {
-                $this->logger->debug('Ad already exists', ['url' => $url]);
-
-                continue;
+                return 1;
             }
 
-            $ad = Ad::fromData(
-                (string) $item->pubDate,
-                $url,
-                $description,
-            );
+            foreach ($rssFeedXml->channel->item as $item) {
+                try {
+                    Assert::propertyExists($item, 'link');
+                    Assert::propertyExists($item, 'pubDate');
+                    Assert::propertyExists($item, 'description');
+                } catch (InvalidArgumentException $exception) {
+                    $this->logger->warning('Bad RSS item', ['message' => $exception->getMessage()]);
 
-            if (! $ad->matches()) {
-                $this->logger->debug('Ad does not match', [
-                    'rooms' => $ad->rooms,
-                    'space' => $ad->space,
-                    'price' => $ad->price,
-                    'description' => $ad->rooms === 0 || $ad->space === 0 || $ad->price === 0 ? $ad->description : '-',
+                    continue;
+                }
+
+                $url         = (string) $item->link;
+                $description = (string) $item->description;
+                $contentHash = md5(str_replace("\n", '', $description));
+
+                $listing = $parser->parse(new SsLvRssItem(
+                    publishedAt: (string) $item->pubDate,
+                    url: $url,
+                    description: $description,
+                ));
+
+                if (! $profile->matches($listing)) {
+                    $this->logger->debug('Listing does not match', [
+                        'url' => $listing->url,
+                        'profile' => $profile->id,
+                        'price' => $listing->price,
+                        'parsedFields' => $listing->parsedFields,
+                    ]);
+
+                    continue;
+                }
+
+                if ($this->listingRepository->isSeen($profile->id, $url, $contentHash)) {
+                    $this->logger->debug('Listing revision already seen', ['url' => $url, 'profile' => $profile->id]);
+
+                    continue;
+                }
+
+                $message = $this->formatMessage($listing, $profile);
+
+                $this->logger->info('Found matching listing', [
+                    'url' => $listing->url,
+                    'profile' => $profile->id,
+                    'price' => $listing->price,
+                    'parsedFields' => $listing->parsedFields,
+                    'imageUrl' => $listing->imageUrl,
                 ]);
 
-                continue;
+                if ($dryRun) {
+                    $this->logger->debug('Dry run: skipping send and save', ['message' => $message]);
+
+                    continue;
+                }
+
+                $this->notifier->send($message, $listing->imageUrl);
+                $this->listingRepository->save($listing, $profile->id, $contentHash);
             }
-
-            $this->adRepository->save($ad);
-
-            try {
-                $tdResponse = json_decode(
-                    (string) $tdClient->post('https://api.tirgusdati.lv/api/listings/history/search', [
-                        'headers' => ['Authorization' => 'Bearer ' . $tdToken],
-                        'json' => ['url' => $ad->url],
-                    ])->getBody(),
-                    associative: true,
-                    flags: JSON_THROW_ON_ERROR,
-                );
-
-                Assert::isArray($tdResponse);
-                Assert::keyExists($tdResponse, 'id');
-                Assert::keyExists($tdResponse, 'timeline');
-                Assert::isArray($tdResponse['timeline']);
-                Assert::keyExists($tdResponse['timeline'], 'price_min');
-                Assert::keyExists($tdResponse['timeline'], 'price_max');
-                Assert::keyExists($tdResponse['timeline'], 'first');
-
-                $ad->addHistory(
-                    (string) $tdResponse['id'],
-                    (int) $tdResponse['timeline']['price_min'],
-                    (int) $tdResponse['timeline']['price_max'],
-                    CarbonImmutable::createFromTimestamp((string) $tdResponse['timeline']['first']),
-                );
-                $tdMessage = sprintf(
-                    "€ min: %s\n€ max: %s\nFirst seen: %s\nhttps://tirgusdati.lv/app/listings/history/%s",
-                    number_format($ad->priceMin, thousands_separator: ' '),
-                    number_format($ad->priceMax, thousands_separator: ' '),
-                    $ad->firstSeenAt->format('Y-m-d H:i:s'),
-                    $ad->tdId,
-                );
-            } catch (GuzzleException | JsonException | InvalidArgumentException $exception) {
-                $tdMessage = 'Could not fetch from TirgusDati: ' . $exception->getMessage();
-                $this->logger->error($tdMessage);
-            }
-
-            $message = sprintf(
-                "%s\n%s\nK: %s \nm2: %s \n€: %s\n%s",
-                $ad->url,
-                $ad->street,
-                $ad->rooms,
-                $ad->space,
-                number_format($ad->price, thousands_separator: ' '),
-                $tdMessage,
-            );
-
-            $this->logger->info('Found new ad', [
-                'street' => $ad->street,
-                'rooms' => $ad->rooms,
-                'space' => $ad->space,
-                'price' => $ad->price,
-                'url' => $ad->url,
-                'price_min' => $ad->priceMin ?? null,
-                'price_max' => $ad->priceMax ?? null,
-                'first_seen_at' => $ad->firstSeenAt->format('Y-m-d H:i:s'),
-                'image_url' => $ad->imageUrl,
-            ]);
-
-            $this->logger->debug('Posting to Telegram', ['message' => $message]);
-            if (! $doPostToTg) {
-                continue;
-            }
-
-            $this->telegramNotifier->send($message, $ad->imageUrl);
         }
 
         return 0;
+    }
+
+    private function formatMessage(Listing $listing, WatchProfile $profile): string
+    {
+        $enrichment = $this->enricher->enrich($listing);
+
+        $lines = [
+            $profile->hashtag,
+            $listing->url,
+        ];
+
+        foreach ($listing->parsedFields as $label => $value) {
+            if ($label === 'price' || $label === 'landAreaRaw' || ($listing->category === Category::House && $label === 'rooms')) {
+                continue;
+            }
+
+            $strValue = (string) $value;
+
+            if ($label === 'landArea') {
+                $lines[] = 'land: ' . $strValue . ' m²';
+
+                continue;
+            }
+
+            if ($label === 'space') {
+                $lines[] = 'space: ' . $strValue . ' m²';
+
+                continue;
+            }
+
+            $lines[] = $label . ': ' . $strValue;
+        }
+
+        $lines[] = '€: ' . number_format($listing->price, thousands_separator: ' ');
+
+        if ($enrichment !== null) {
+            $lines[] = sprintf(
+                "€ min: %s\n€ max: %s\nFirst seen: %s\nhttps://tirgusdati.lv/app/listings/history/%s",
+                number_format($enrichment->priceMin, thousands_separator: ' '),
+                number_format($enrichment->priceMax, thousands_separator: ' '),
+                $enrichment->firstSeenAt->format('Y-m-d'),
+                $enrichment->tdId,
+            );
+        }
+
+        return implode("\n", $lines);
     }
 }

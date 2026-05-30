@@ -26,4 +26,30 @@ HTML;
 Цена: <b>{$price}</b>
 HTML;
     }
+
+    public static function house(
+        string $street = 'Babites',
+        int $rooms = 5,
+        int $space = 120,
+        string $landArea = '1 200',
+        string $landUnit = 'm²',
+        int $floors = 2,
+        string $price = '180,000 €',
+        string|null $imageUrl = null,
+    ): string {
+        $image = $imageUrl === null ? '' : <<<HTML
+<a href="https://www.ss.lv/msg/lv/real-estate/homes-summer-residences/riga-region/babites/example.html"><img align=right border=0 src="{$imageUrl}" width="174" height="130" alt=""></a>
+
+HTML;
+
+        return <<<HTML
+{$image}
+Iela: <b>{$street}</b><br/>
+m²: <b>{$space}</b><br/>
+Stāvi: <b>{$floors}</b><br/>
+Ist.: <b>{$rooms}</b><br/>
+Zem. pl.: <b>{$landArea} {$landUnit}</b><br/>
+Cena: <b>{$price}</b>
+HTML;
+    }
 }

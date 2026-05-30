@@ -6,4 +6,5 @@ services:
     volumes:
       - ./var:/app/var
       - ./.env:/app/.env
+      - ./config/watch_profiles.local.php:/app/config/watch_profiles.local.php:ro
       - ./crontab:/app/crontab
