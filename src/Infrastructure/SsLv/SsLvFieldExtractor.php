@@ -64,28 +64,4 @@ final readonly class SsLvFieldExtractor
 
         return $matches[2];
     }
-
-    public static function aliasedFieldText(string $singleLineDescription, string ...$labels): string
-    {
-        foreach ($labels as $label) {
-            $value = self::fieldText($singleLineDescription, $label);
-            if ($value !== '') {
-                return $value;
-            }
-        }
-
-        return '';
-    }
-
-    public static function aliasedIntegerField(string $singleLineDescription, string ...$labels): int
-    {
-        foreach ($labels as $label) {
-            $value = self::integerField($singleLineDescription, $label);
-            if ($value !== 0) {
-                return $value;
-            }
-        }
-
-        return 0;
-    }
 }

@@ -14,16 +14,16 @@ final class SsLvDescription
         string|null $imageUrl = null,
     ): string {
         $image = $imageUrl === null ? '' : <<<HTML
-<a href="https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/example.html"><img align=right border=0 src="{$imageUrl}" width="174" height="130" alt=""></a>
+<a href="https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/example.html"><img align=right border=0 src="{$imageUrl}" width="174" height="130" alt=""></a>
 
 HTML;
 
         return <<<HTML
 {$image}
-Улица: <b>{$street}</b><br/>
-К.: <b>{$rooms}</b><br/>
-м²: <b>{$space}</b><br/>
-Цена: <b>{$price}</b>
+Iela: <b>{$street}</b><br/>
+Ist.: <b>{$rooms}</b><br/>
+m²: <b>{$space}</b><br/>
+Cena: <b>{$price}</b>
 HTML;
     }
 

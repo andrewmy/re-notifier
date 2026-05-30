@@ -22,7 +22,7 @@ final class ApartmentParserTest extends TestCase
             price: '250,000 €',
         ));
 
-        self::assertSame('https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/example.html', $listing->url);
+        self::assertSame('https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/example.html', $listing->url);
         self::assertSame(250000, $listing->price);
         self::assertSame(Category::Apartment, $listing->category);
         self::assertArrayHasKey('rooms', $listing->parsedFields);
@@ -47,13 +47,13 @@ final class ApartmentParserTest extends TestCase
     public function testParsesNestedBoldTags(): void
     {
         $listing = $this->parse(<<<'HTML'
-Улица: <b><b>Миера 5</b></b><br/>
-К.: <b><b>4</b></b><br/>
-м²: <b><b>100</b></b><br/>
-Цена: <b><b>330,000</b>  €</b>
+Iela: <b><b>Ģertrūdes 9</b></b><br/>
+Ist.: <b><b>4</b></b><br/>
+m²: <b><b>100</b></b><br/>
+Cena: <b><b>330,000</b>  €</b>
 HTML);
 
-        self::assertSame('Миера 5', $listing->parsedFields['street']);
+        self::assertSame('Ģertrūdes 9', $listing->parsedFields['street']);
         self::assertSame(4, $listing->parsedFields['rooms']);
         self::assertSame(100, $listing->parsedFields['space']);
         self::assertSame(330000, $listing->price);
@@ -62,12 +62,12 @@ HTML);
     public function testParsesStreetWithoutBrTagNoiseFromBoldContent(): void
     {
         $listing = $this->parse(<<<'HTML'
-<a href="https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/bekolk.html"><img align=right border=0 src="https://i.ss.lv/gallery/8/1504/375869/75173717.t.jpg" width="174" height="130" alt=""></a>
-		 Район: <b><b>центр<br>Бривибас 52</b></b><br/>Улица: <b><b>Бривибас 52 52<br>центр<br>Бривибас 52</b></b><br/>К.: <b><b>5</b></b><br/>м²: <b><b>133</b></b><br/>Этаж: <b><b>4/4</b></b><br/>Серия: <b><b>Дов. дом</b></b><br/>: <b><b>7.14</b> €</b><br/>Цена: <b><b>950</b>  €/мес.</b><br/><br/><b><a href="https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/bekolk.html">Смотреть объявление</a></b><br/><br/>
+<a href="https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/bekolk.html"><img align=right border=0 src="https://i.ss.lv/gallery/8/1504/375869/75173717.t.jpg" width="174" height="130" alt=""></a>
+		 Pagasts: <b><b>centrs<br>Brīvības 52</b></b><br/>Iela: <b><b>Brīvības 52 52<br>centrs<br>Brīvības 52</b></b><br/>Ist.: <b><b>5</b></b><br/>m²: <b><b>133</b></b><br/>Stāvs: <b><b>4/4</b></b><br/>Sērija: <b><b>P. kara</b></b><br/>: <b><b>7.14</b> €</b><br/>Cena: <b><b>950</b>  €/mēn.</b><br/><br/><b><a href="https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/bekolk.html">Apskatīt sludinājumu</a></b><br/><br/>
 		 
 HTML);
 
-        self::assertSame('Бривибас 52', $listing->parsedFields['street']);
+        self::assertSame('Brīvības 52', $listing->parsedFields['street']);
         self::assertSame(5, $listing->parsedFields['rooms']);
         self::assertSame(133, $listing->parsedFields['space']);
         self::assertSame(950, $listing->price);
@@ -82,12 +82,12 @@ HTML);
 
     public function testZeroPriceWhenUnparsable(): void
     {
-        $listing = $this->parse(SsLvDescription::apartment(price: 'куплю'));
+        $listing = $this->parse(SsLvDescription::apartment(price: 'pērk'));
 
         self::assertSame(0, $listing->price);
     }
 
-    private function parse(string $description, string $url = 'https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/example.html'): Listing
+    private function parse(string $description, string $url = 'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/example.html'): Listing
     {
         return (new ApartmentParser())->parse(new SsLvRssItem(
             publishedAt: 'Thu, 28 May 2026 16:38:34 +0300',

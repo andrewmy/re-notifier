@@ -16,10 +16,10 @@ final class SsLvFieldExtractorTest extends TestCase
             SsLvDescription::apartment(street: 'Brivibas', rooms: 4, space: 90, price: '250,000 €'),
         );
 
-        self::assertSame('Brivibas', SsLvFieldExtractor::fieldText($plainText, 'Улица'));
-        self::assertSame(4, SsLvFieldExtractor::integerField($plainText, 'К.'));
-        self::assertSame(90, SsLvFieldExtractor::integerField($plainText, 'м²'));
-        self::assertSame(250000, SsLvFieldExtractor::integerField($plainText, 'Цена'));
+        self::assertSame('Brivibas', SsLvFieldExtractor::fieldText($plainText, 'Iela'));
+        self::assertSame(4, SsLvFieldExtractor::integerField($plainText, 'Ist.'));
+        self::assertSame(90, SsLvFieldExtractor::integerField($plainText, 'm²'));
+        self::assertSame(250000, SsLvFieldExtractor::integerField($plainText, 'Cena'));
     }
 
     public function testExtractsFirstImageUrl(): void
@@ -44,16 +44,16 @@ final class SsLvFieldExtractorTest extends TestCase
     public function testExtractsFieldsFromNestedBoldTags(): void
     {
         $plainText = SsLvFieldExtractor::toPlainText(<<<'HTML'
-Улица: <b><b>Миера 5</b></b><br/>
-К.: <b><b>4</b></b><br/>
-м²: <b><b>100</b></b><br/>
-Цена: <b><b>330,000</b>  €</b>
+Iela: <b><b>Ģertrūdes 9</b></b><br/>
+Ist.: <b><b>4</b></b><br/>
+m²: <b><b>100</b></b><br/>
+Cena: <b><b>330,000</b>  €</b>
 HTML);
 
-        self::assertSame('Миера 5', SsLvFieldExtractor::fieldText($plainText, 'Улица'));
-        self::assertSame(4, SsLvFieldExtractor::integerField($plainText, 'К.'));
-        self::assertSame(100, SsLvFieldExtractor::integerField($plainText, 'м²'));
-        self::assertSame(330000, SsLvFieldExtractor::integerField($plainText, 'Цена'));
+        self::assertSame('Ģertrūdes 9', SsLvFieldExtractor::fieldText($plainText, 'Iela'));
+        self::assertSame(4, SsLvFieldExtractor::integerField($plainText, 'Ist.'));
+        self::assertSame(100, SsLvFieldExtractor::integerField($plainText, 'm²'));
+        self::assertSame(330000, SsLvFieldExtractor::integerField($plainText, 'Cena'));
     }
 
     public function testReturnsEmptyForMissingField(): void
@@ -62,33 +62,6 @@ HTML);
 
         self::assertSame('', SsLvFieldExtractor::fieldText($plainText, 'Nonexistent'));
         self::assertSame(0, SsLvFieldExtractor::integerField($plainText, 'Nonexistent'));
-    }
-
-    public function testAliasedFieldTextTriesLabelsInOrder(): void
-    {
-        $apartment = SsLvFieldExtractor::toPlainText(SsLvDescription::apartment(street: 'Brivibas'));
-        $house     = SsLvFieldExtractor::toPlainText(SsLvDescription::house(street: 'Babites'));
-
-        self::assertSame('Brivibas', SsLvFieldExtractor::aliasedFieldText($apartment, 'Улица', 'Iela'));
-        self::assertSame('Babites', SsLvFieldExtractor::aliasedFieldText($house, 'Улица', 'Iela'));
-        self::assertSame('Babites', SsLvFieldExtractor::aliasedFieldText($house, 'Iela', 'Улица'));
-    }
-
-    public function testAliasedIntegerFieldTriesLabelsInOrder(): void
-    {
-        $apartment = SsLvFieldExtractor::toPlainText(SsLvDescription::apartment(rooms: 4));
-        $house     = SsLvFieldExtractor::toPlainText(SsLvDescription::house(rooms: 5));
-
-        self::assertSame(4, SsLvFieldExtractor::aliasedIntegerField($apartment, 'К.', 'Ist.'));
-        self::assertSame(5, SsLvFieldExtractor::aliasedIntegerField($house, 'К.', 'Ist.'));
-        self::assertSame(5, SsLvFieldExtractor::aliasedIntegerField($house, 'Ist.', 'К.'));
-    }
-
-    public function testAliasedFieldReturnsFirstNonEmptyMatch(): void
-    {
-        $plainText = SsLvFieldExtractor::toPlainText(SsLvDescription::apartment(rooms: 4));
-
-        self::assertSame(4, SsLvFieldExtractor::aliasedIntegerField($plainText, 'К.', 'Ist.'));
     }
 
     public function testExtractsHouseFieldsWithDirectLabels(): void

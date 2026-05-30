@@ -17,7 +17,7 @@ final readonly class ApartmentParser implements SsLvParser
     {
         $plainText = SsLvFieldExtractor::toPlainText($item->description);
 
-        $street = SsLvFieldExtractor::fieldLastLine($plainText, 'Улица');
+        $street = SsLvFieldExtractor::fieldLastLine($plainText, 'Iela');
         if ($street === '' || preg_match('/.*[<=].*/', $street)) {
             $street = 'n/a';
         }
@@ -29,9 +29,9 @@ final readonly class ApartmentParser implements SsLvParser
             imageUrl: SsLvFieldExtractor::imageUrl($item->description),
             publishedAt: CarbonImmutable::createFromTimeString($item->publishedAt),
             storedAt: CarbonImmutable::now(),
-            price: SsLvFieldExtractor::integerField($plainText, 'Цена'),
-            rooms: SsLvFieldExtractor::integerField($plainText, 'К.'),
-            space: SsLvFieldExtractor::aliasedIntegerField($plainText, 'm2', 'м²'),
+            price: SsLvFieldExtractor::integerField($plainText, 'Cena'),
+            rooms: SsLvFieldExtractor::integerField($plainText, 'Ist.'),
+            space: SsLvFieldExtractor::integerField($plainText, 'm²'),
             street: $street,
         );
     }
