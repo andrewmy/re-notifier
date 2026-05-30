@@ -9,10 +9,9 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Webmozart\Assert\Assert;
 
-use function assert;
 use function date;
-use function is_string;
 use function sprintf;
 
 final class ListingRaw extends Command
@@ -31,7 +30,7 @@ final class ListingRaw extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $url = $input->getArgument('url');
-        assert(is_string($url));
+        Assert::string($url);
 
         $rows = $this->listingRepository->findRawDescriptionsByUrl($url);
 

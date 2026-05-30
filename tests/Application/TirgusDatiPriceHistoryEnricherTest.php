@@ -12,7 +12,6 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
 use Symfony\Component\Uid\Ulid;
 
 use function json_encode;
@@ -23,10 +22,9 @@ final class TirgusDatiPriceHistoryEnricherTest extends TestCase
 {
     public function testEnrichesApartmentListingWithPriceHistory(): void
     {
-        $requests = [];
         $enricher = self::enricher([
-            self::meResponse($requests),
-            self::historyResponse($requests),
+            self::meResponse(),
+            self::historyResponse(),
         ]);
 
         $listing = self::apartmentListing();
@@ -40,7 +38,6 @@ final class TirgusDatiPriceHistoryEnricherTest extends TestCase
 
     public function testReturnsNullOnTokenFetchFailure(): void
     {
-        $requests = [];
         $enricher = self::enricher([
             new Response(status: 500),
         ]);
@@ -53,9 +50,8 @@ final class TirgusDatiPriceHistoryEnricherTest extends TestCase
 
     public function testReturnsNullOnHistoryFetchFailure(): void
     {
-        $requests = [];
         $enricher = self::enricher([
-            self::meResponse($requests),
+            self::meResponse(),
             new Response(status: 500),
         ]);
 
@@ -74,16 +70,14 @@ final class TirgusDatiPriceHistoryEnricherTest extends TestCase
         return new TirgusDatiPriceHistoryEnricher($client);
     }
 
-    /** @param list<RequestInterface> $requests */
-    private static function meResponse(array &$requests): Response
+    private static function meResponse(): Response
     {
         return new Response(
             body: json_encode(['key' => 'test-token'], JSON_THROW_ON_ERROR),
         );
     }
 
-    /** @param list<RequestInterface> $requests */
-    private static function historyResponse(array &$requests): Response
+    private static function historyResponse(): Response
     {
         return new Response(
             body: json_encode([

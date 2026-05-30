@@ -16,7 +16,6 @@ use App\Infrastructure\SsLv\SsLvRssItem;
 use App\Tests\Support\SsLvDescription;
 use PHPUnit\Framework\TestCase;
 
-use function assert;
 use function number_format;
 
 final class WatchProfileTest extends TestCase
@@ -150,7 +149,7 @@ final class WatchProfileTest extends TestCase
             description: SsLvDescription::apartment(rooms: $rooms, space: $space, price: self::formatPrice($price)),
         ));
 
-        assert($result instanceof ApartmentListing);
+        self::assertInstanceOf(ApartmentListing::class, $result);
 
         return $result;
     }
@@ -168,7 +167,7 @@ final class WatchProfileTest extends TestCase
             description: SsLvDescription::house(rooms: $rooms, space: $space, landArea: $landArea, price: self::formatPrice($price)),
         ));
 
-        assert($result instanceof HouseListing);
+        self::assertInstanceOf(HouseListing::class, $result);
 
         return $result;
     }
@@ -179,8 +178,6 @@ final class WatchProfileTest extends TestCase
             return 'куплю';
         }
 
-        $formatted = number_format($price, thousands_separator: ' ');
-
-        return $formatted . ' €';
+        return number_format($price, thousands_separator: ' ') . ' €';
     }
 }

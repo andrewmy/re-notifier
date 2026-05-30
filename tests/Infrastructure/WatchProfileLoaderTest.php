@@ -31,7 +31,7 @@ final class WatchProfileLoaderTest extends TestCase
 
     public function testLoadsValidConfig(): void
     {
-        $this->writeConfig(<<<'PHP'
+        $configFile = $this->writeConfig(<<<'PHP'
 <?php
 declare(strict_types=1);
 use App\Domain\ApartmentCriteria;
@@ -47,9 +47,7 @@ return [
 ];
 PHP);
 
-        self::assertIsString($this->configFile);
-
-        $profiles = WatchProfileLoader::load($this->configFile);
+        $profiles = WatchProfileLoader::load($configFile);
 
         self::assertCount(1, $profiles);
         self::assertInstanceOf(WatchProfile::class, $profiles[0]);
@@ -67,13 +65,12 @@ PHP);
 
     public function testInvalidConfigThrows(): void
     {
-        $this->writeConfig('<?php return "not an array";');
+        $configFile = $this->writeConfig('<?php return "not an array";');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('must return an array of WatchProfile');
 
-        self::assertIsString($this->configFile);
-        WatchProfileLoader::load($this->configFile);
+        WatchProfileLoader::load($configFile);
     }
 
     public function testLoadsCommittedExampleConfig(): void
@@ -88,9 +85,13 @@ PHP);
         }
     }
 
-    private function writeConfig(string $content): void
+    private function writeConfig(string $content): string
     {
         $this->configFile = tempnam(sys_get_temp_dir(), 'watch-profiles-test-');
+        self::assertIsString($this->configFile);
+
         file_put_contents($this->configFile, $content);
+
+        return $this->configFile;
     }
 }

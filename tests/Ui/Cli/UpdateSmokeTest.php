@@ -35,10 +35,7 @@ final class UpdateSmokeTest extends TestCase
 
         $command = self::createCommand($profile, $rss, $repo, $notifier);
 
-        $input  = new StringInput('--dry-run');
-        $output = new BufferedOutput();
-
-        $result = $command->run($input, $output);
+        $result = self::runCommand($command, '--dry-run');
 
         self::assertSame(0, $result);
         self::assertFalse($repo->saved);
@@ -54,10 +51,7 @@ final class UpdateSmokeTest extends TestCase
 
         $command = self::createCommand($profile, $rss, $repo, $notifier);
 
-        $input  = new StringInput('');
-        $output = new BufferedOutput();
-
-        $result = $command->run($input, $output);
+        $result = self::runCommand($command);
 
         self::assertSame(0, $result);
         self::assertTrue($repo->saved);
@@ -74,10 +68,7 @@ final class UpdateSmokeTest extends TestCase
 
         $command = self::createCommand($profile, $rss, $repo, $notifier);
 
-        $input  = new StringInput('');
-        $output = new BufferedOutput();
-
-        $command->run($input, $output);
+        self::runCommand($command);
 
         self::assertFalse($repo->saved);
         self::assertEmpty($notifier->messages);
@@ -93,10 +84,7 @@ final class UpdateSmokeTest extends TestCase
 
         $command = self::createCommand($profile, $rss, $repo, $notifier);
 
-        $input  = new StringInput('');
-        $output = new BufferedOutput();
-
-        $command->run($input, $output);
+        self::runCommand($command);
 
         self::assertFalse($repo->saved);
         self::assertEmpty($notifier->messages);
@@ -111,10 +99,7 @@ final class UpdateSmokeTest extends TestCase
 
         $command = self::createCommand($profile, $rss, $repo, $notifier);
 
-        $input  = new StringInput('');
-        $output = new BufferedOutput();
-
-        $command->run($input, $output);
+        self::runCommand($command);
 
         self::assertTrue($repo->saved);
         self::assertCount(1, $notifier->messages);
@@ -130,10 +115,7 @@ final class UpdateSmokeTest extends TestCase
 
         $command = self::createCommand($profile, $rss, $repo, $notifier);
 
-        $input  = new StringInput('');
-        $output = new BufferedOutput();
-
-        $command->run($input, $output);
+        self::runCommand($command);
 
         $msg = $notifier->messages[0];
         self::assertStringContainsString('#riga_family_apartments', $msg);
@@ -160,6 +142,11 @@ final class UpdateSmokeTest extends TestCase
             new NullLogger(),
             $client,
         );
+    }
+
+    private static function runCommand(Update $command, string $input = ''): int
+    {
+        return $command->run(new StringInput($input), new BufferedOutput());
     }
 
     private static function apartmentProfile(): WatchProfile

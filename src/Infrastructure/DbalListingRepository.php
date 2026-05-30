@@ -6,13 +6,13 @@ namespace App\Infrastructure;
 
 use App\Domain\Listing;
 use App\Domain\ListingRepository;
+use App\Infrastructure\SsLv\SsLvFieldExtractor;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 
 use function json_encode;
 use function md5;
-use function preg_match;
 use function str_replace;
 
 use const JSON_THROW_ON_ERROR;
@@ -135,8 +135,6 @@ final readonly class DbalListingRepository implements ListingRepository
                 'space' => (int) $row['space'],
             ], JSON_THROW_ON_ERROR);
 
-            $imageUrl = self::extractImageUrl($description);
-
             $this->db->executeQuery(
                 'INSERT INTO ' . self::TABLE_NAME . ' ('
                 . 'id, stored_at, published_at, url, price, description, '
@@ -153,20 +151,11 @@ final readonly class DbalListingRepository implements ListingRepository
                     'apartment',
                     $contentHash,
                     $parsedFields,
-                    $imageUrl,
+                    SsLvFieldExtractor::imageUrl($description),
                 ],
             );
         }
 
         $this->db->executeQuery('DROP TABLE ads');
-    }
-
-    private static function extractImageUrl(string $description): string|null
-    {
-        if (! preg_match('/<img\b[^>]*\bsrc=(["\']?)(https?:\/\/[^"\'\s>]+)\1/iu', $description, $matches)) {
-            return null;
-        }
-
-        return $matches[2];
     }
 }

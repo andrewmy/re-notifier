@@ -11,12 +11,8 @@ final class SpyNotifier implements Notifier
     /** @var list<string> */
     public array $messages = [];
 
-    /** @var list<string|null> */
-    public array $imageUrls = [];
-
     public function send(string $message, string|null $imageUrl): void
     {
-        $this->messages[]  = $message;
-        $this->imageUrls[] = $imageUrl;
+        $this->messages[] = $message;
     }
 }
