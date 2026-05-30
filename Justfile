@@ -42,7 +42,7 @@ deptrac:
 
 # Lint markdown, don't look at externally sourced files
 markdown:
-    markdownlint README.md
+    markdownlint README.md docs/**/*.md
 
 # Deploy to the configured server
 deploy:

@@ -89,5 +89,7 @@ The container runs a cron job every 5 minutes to check for new ads, the schedule
 This will:
 
 - Sync `docker-compose.yml` to the server
-- Upload local files if they don't exist on remote: `.env.local` => `.env`, `var/db.sqlite`, `config/watch_profiles.local.php`, `crontab`
+- Upload local files if they don't exist on remote:
+  `.env.local` => `.env`, `var/db.sqlite`,
+  `config/watch_profiles.local.php`, `crontab`
 - Pull the latest image and restart the container
