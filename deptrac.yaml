@@ -24,7 +24,6 @@ deptrac:
     Ui:
       - Application
       - Domain
-      - Infrastructure
     Application:
       - Domain
     Infrastructure:

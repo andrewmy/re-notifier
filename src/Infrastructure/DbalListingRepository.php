@@ -6,14 +6,13 @@ namespace App\Infrastructure;
 
 use App\Domain\Listing;
 use App\Domain\ListingRepository;
+use App\Domain\ListingRevisionCandidate;
 use App\Infrastructure\SsLv\SsLvFieldExtractor;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 
 use function json_encode;
-use function md5;
-use function str_replace;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -119,7 +118,7 @@ final readonly class DbalListingRepository implements ListingRepository
         foreach ($rows as $row) {
             $description = (string) $row['description'];
             $url         = (string) $row['url'];
-            $contentHash = md5(str_replace("\n", '', $description));
+            $contentHash = ListingRevisionCandidate::contentHash($description);
 
             $existing = $this->db->fetchOne(
                 'SELECT id FROM ' . self::TABLE_NAME . ' WHERE watch_profile_id = ? AND url = ? AND content_hash = ?',

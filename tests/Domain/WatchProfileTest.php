@@ -14,6 +14,7 @@ use App\Infrastructure\SsLv\ApartmentParser;
 use App\Infrastructure\SsLv\HouseParser;
 use App\Infrastructure\SsLv\SsLvRssItem;
 use App\Tests\Support\SsLvDescription;
+use App\Tests\Support\SsLvFixtures;
 use PHPUnit\Framework\TestCase;
 
 use function number_format;
@@ -22,7 +23,7 @@ final class WatchProfileTest extends TestCase
 {
     public function testApartmentProfileMatchesMatchingApartment(): void
     {
-        $profile = self::apartmentProfile();
+        $profile = SsLvFixtures::apartmentProfile();
         $listing = self::apartmentListing(rooms: 4, space: 90, price: 250000);
 
         self::assertTrue($profile->matches($listing));
@@ -30,7 +31,7 @@ final class WatchProfileTest extends TestCase
 
     public function testApartmentProfileRejectsTooFewRooms(): void
     {
-        $profile = self::apartmentProfile();
+        $profile = SsLvFixtures::apartmentProfile();
         $listing = self::apartmentListing(rooms: 3, space: 90, price: 250000);
 
         self::assertFalse($profile->matches($listing));
@@ -38,7 +39,7 @@ final class WatchProfileTest extends TestCase
 
     public function testApartmentProfileRejectsTooSmallSpace(): void
     {
-        $profile = self::apartmentProfile();
+        $profile = SsLvFixtures::apartmentProfile();
         $listing = self::apartmentListing(rooms: 4, space: 84, price: 250000);
 
         self::assertFalse($profile->matches($listing));
@@ -46,7 +47,7 @@ final class WatchProfileTest extends TestCase
 
     public function testApartmentProfileRejectsTooExpensive(): void
     {
-        $profile = self::apartmentProfile();
+        $profile = SsLvFixtures::apartmentProfile();
         $listing = self::apartmentListing(rooms: 4, space: 90, price: 260001);
 
         self::assertFalse($profile->matches($listing));
@@ -54,7 +55,7 @@ final class WatchProfileTest extends TestCase
 
     public function testApartmentProfileAllowsZeroPrice(): void
     {
-        $profile = self::apartmentProfile();
+        $profile = SsLvFixtures::apartmentProfile();
         $listing = self::apartmentListing(rooms: 4, space: 90, price: 0);
 
         self::assertTrue($profile->matches($listing));
@@ -62,7 +63,7 @@ final class WatchProfileTest extends TestCase
 
     public function testApartmentProfileRejectsHouseListing(): void
     {
-        $profile = self::apartmentProfile();
+        $profile = SsLvFixtures::apartmentProfile();
         $listing = self::houseListing(rooms: 5, space: 120, price: 180000);
 
         self::assertFalse($profile->matches($listing));
@@ -70,7 +71,7 @@ final class WatchProfileTest extends TestCase
 
     public function testSameListingMatchesOneProfileAndFailsAnother(): void
     {
-        $strict  = self::apartmentProfile();
+        $strict  = SsLvFixtures::apartmentProfile();
         $lenient = new WatchProfile(
             id: 'riga-lenient-apartments',
             category: Category::Apartment,
@@ -86,7 +87,7 @@ final class WatchProfileTest extends TestCase
 
     public function testHashtagDerivedFromId(): void
     {
-        $profile = self::apartmentProfile();
+        $profile = SsLvFixtures::apartmentProfile();
 
         self::assertSame('#riga_family_apartments', $profile->hashtag);
     }
@@ -120,16 +121,6 @@ final class WatchProfileTest extends TestCase
         self::assertTrue($profile->matches(self::houseListing(rooms: 5, space: 120, price: 180000, landArea: '1 800')));
     }
 
-    private static function apartmentProfile(): WatchProfile
-    {
-        return new WatchProfile(
-            id: 'riga-family-apartments',
-            category: Category::Apartment,
-            rssUrl: 'https://www.ss.lv/ru/real-estate/flats/riga/all/rss/',
-            criteria: new ApartmentCriteria(minRooms: 4, minSpace: 85, maxPrice: 260000),
-        );
-    }
-
     private static function houseProfile(): WatchProfile
     {
         return new WatchProfile(
@@ -145,7 +136,7 @@ final class WatchProfileTest extends TestCase
         $parser = new ApartmentParser();
         $result = $parser->parse(new SsLvRssItem(
             publishedAt: 'Thu, 28 May 2026 16:38:34 +0300',
-            url: 'https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/example.html',
+            url: SsLvFixtures::APARTMENT_URL,
             description: SsLvDescription::apartment(rooms: $rooms, space: $space, price: self::formatPrice($price)),
         ));
 

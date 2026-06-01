@@ -1,6 +1,6 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
-coverage_min := env_var_or_default("COVERAGE_MIN", "84")
+coverage_min := env_var_or_default("COVERAGE_MIN", "85")
 
 # List available recipes
 default:

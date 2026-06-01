@@ -5,46 +5,32 @@ declare(strict_types=1);
 namespace App\Ui\Cli;
 
 use App\Application\ListingEnricher;
+use App\Application\ListingRevisionIntake;
 use App\Application\Notifier;
 use App\Domain\Category;
 use App\Domain\Listing;
 use App\Domain\ListingRepository;
+use App\Domain\ListingRevisionSourceFailed;
 use App\Domain\WatchProfile;
-use App\Infrastructure\SsLv\SsLvParser;
-use App\Infrastructure\SsLv\SsLvRssItem;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerInterface;
-use SimpleXMLElement;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Throwable;
-use Webmozart\Assert\Assert;
-use Webmozart\Assert\InvalidArgumentException;
 
 use function implode;
-use function md5;
 use function number_format;
 use function sprintf;
-use function str_replace;
-
-use const LIBXML_NOCDATA;
 
 final class Update extends Command
 {
-    /**
-     * @param list<WatchProfile>        $watchProfiles
-     * @param array<string, SsLvParser> $parsers
-     */
+    /** @param list<WatchProfile> $watchProfiles */
     public function __construct(
         private readonly array $watchProfiles,
-        private readonly array $parsers,
+        private readonly ListingRevisionIntake $listingRevisionIntake,
         private readonly ListingRepository $listingRepository,
         private readonly Notifier $notifier,
         private readonly ListingEnricher $enricher,
         private readonly LoggerInterface $logger,
-        private readonly Client $rssClient,
     ) {
         parent::__construct('update');
     }
@@ -62,63 +48,16 @@ final class Update extends Command
         $dryRun = (bool) $input->getOption('dry-run');
 
         foreach ($this->watchProfiles as $profile) {
-            $parser = $this->parsers[$profile->category->value]
-                ?? throw new InvalidArgumentException('No parser for category ' . $profile->category->value);
-
             try {
-                $rssFeedBody = (string) $this->rssClient->get($profile->rssUrl)->getBody();
-            } catch (GuzzleException $exception) {
-                $this->logger->error('Could not fetch RSS feed: ' . $exception->getMessage());
+                $pendingRevisions = $this->listingRevisionIntake->pendingRevisions($profile);
+            } catch (ListingRevisionSourceFailed $exception) {
+                $this->logger->error($exception->getMessage());
 
                 return 1;
             }
 
-            try {
-                $rssFeedXml = new SimpleXMLElement($rssFeedBody, LIBXML_NOCDATA);
-            } catch (Throwable $exception) {
-                $this->logger->error('Could not parse RSS feed: ' . $exception->getMessage());
-
-                return 1;
-            }
-
-            foreach ($rssFeedXml->channel->item as $item) {
-                try {
-                    Assert::propertyExists($item, 'link');
-                    Assert::propertyExists($item, 'pubDate');
-                    Assert::propertyExists($item, 'description');
-                } catch (InvalidArgumentException $exception) {
-                    $this->logger->warning('Bad RSS item', ['message' => $exception->getMessage()]);
-
-                    continue;
-                }
-
-                $url         = (string) $item->link;
-                $description = (string) $item->description;
-                $contentHash = md5(str_replace("\n", '', $description));
-
-                $listing = $parser->parse(new SsLvRssItem(
-                    publishedAt: (string) $item->pubDate,
-                    url: $url,
-                    description: $description,
-                ));
-
-                if (! $profile->matches($listing)) {
-                    $this->logger->debug('Listing does not match', [
-                        'url' => $listing->url,
-                        'profile' => $profile->id,
-                        'price' => $listing->price,
-                        'parsedFields' => $listing->parsedFields,
-                    ]);
-
-                    continue;
-                }
-
-                if ($this->listingRepository->isSeen($profile->id, $url, $contentHash)) {
-                    $this->logger->debug('Listing revision already seen', ['url' => $url, 'profile' => $profile->id]);
-
-                    continue;
-                }
-
+            foreach ($pendingRevisions as $pendingRevision) {
+                $listing = $pendingRevision->listing;
                 $message = $this->formatMessage($listing, $profile);
 
                 $this->logger->info('Found matching listing', [
@@ -136,7 +75,7 @@ final class Update extends Command
                 }
 
                 $this->notifier->send($message, $listing->imageUrl);
-                $this->listingRepository->save($listing, $profile->id, $contentHash);
+                $this->listingRepository->save($listing, $profile->id, $pendingRevision->contentHash);
             }
         }
 

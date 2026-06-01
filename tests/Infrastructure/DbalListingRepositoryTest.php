@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure;
 
 use App\Domain\ApartmentListing;
+use App\Domain\ListingRevisionCandidate;
 use App\Infrastructure\DbalListingRepository;
 use App\Tests\Support\SsLvDescription;
 use Carbon\CarbonImmutable;
@@ -14,8 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Ulid;
 
 use function file_exists;
-use function md5;
-use function str_replace;
 use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
@@ -37,7 +36,7 @@ final class DbalListingRepositoryTest extends TestCase
     {
         $repository = $this->repository();
         $listing    = self::apartmentListing();
-        $hash       = self::hash($listing->description);
+        $hash       = ListingRevisionCandidate::contentHash($listing->description);
 
         self::assertFalse($repository->isSeen('riga-family-apartments', $listing->url, $hash));
 
@@ -50,7 +49,7 @@ final class DbalListingRepositoryTest extends TestCase
     {
         $repository = $this->repository();
         $listing    = self::apartmentListing();
-        $hash       = self::hash($listing->description);
+        $hash       = ListingRevisionCandidate::contentHash($listing->description);
 
         $repository->save($listing, 'riga-family-apartments', $hash);
 
@@ -64,8 +63,8 @@ final class DbalListingRepositoryTest extends TestCase
         $listing1   = self::apartmentListing(url: 'https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/example.html', description: SsLvDescription::apartment(street: 'Brivibas'));
         $listing2   = self::apartmentListing(url: 'https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/example.html', description: SsLvDescription::apartment(street: 'Tallinas'));
 
-        $hash1 = self::hash($listing1->description);
-        $hash2 = self::hash($listing2->description);
+        $hash1 = ListingRevisionCandidate::contentHash($listing1->description);
+        $hash2 = ListingRevisionCandidate::contentHash($listing2->description);
 
         self::assertNotSame($hash1, $hash2);
 
@@ -84,7 +83,7 @@ final class DbalListingRepositoryTest extends TestCase
 
         $repository = new DbalListingRepository('pdo-sqlite:///' . $dbFile);
 
-        $hash = self::hash('old description');
+        $hash = ListingRevisionCandidate::contentHash('old description');
 
         self::assertTrue($repository->isSeen('riga-family-apartments', 'https://old-url.example.com', $hash));
     }
@@ -94,7 +93,7 @@ final class DbalListingRepositoryTest extends TestCase
         $repository = $this->repository();
         $url        = 'https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/example.html';
         $listing    = self::apartmentListing(url: $url);
-        $hash       = self::hash($listing->description);
+        $hash       = ListingRevisionCandidate::contentHash($listing->description);
 
         $repository->save($listing, 'riga-family-apartments', $hash);
 
@@ -163,10 +162,5 @@ final class DbalListingRepositoryTest extends TestCase
             space: 90,
             street: 'Brivibas',
         );
-    }
-
-    private static function hash(string $description): string
-    {
-        return md5(str_replace("\n", '', $description));
     }
 }
