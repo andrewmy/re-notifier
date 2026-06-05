@@ -42,7 +42,7 @@ final readonly class SsLvFieldExtractor
         }
 
         $full  = trim(str_replace(',', '', $matches[1]));
-        $lines = array_filter(array_map('trim', explode("\n", $full)));
+        $lines = array_filter(array_map(trim(...), explode("\n", $full)));
 
         return end($lines) ?: '';
     }
