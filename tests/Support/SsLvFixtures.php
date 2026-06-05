@@ -6,9 +6,11 @@ namespace App\Tests\Support;
 
 use App\Domain\ApartmentCriteria;
 use App\Domain\Category;
+use App\Domain\LaptopCriteria;
 use App\Domain\WatchProfile;
 use App\Infrastructure\SsLv\ApartmentParser;
 use App\Infrastructure\SsLv\HouseParser;
+use App\Infrastructure\SsLv\LaptopParser;
 use App\Infrastructure\SsLv\SsLvParser;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
@@ -29,12 +31,23 @@ final class SsLvFixtures
         );
     }
 
+    public static function laptopProfile(): WatchProfile
+    {
+        return new WatchProfile(
+            id: 'apple-laptops',
+            category: Category::Laptop,
+            rssUrl: 'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+            criteria: new LaptopCriteria(maxPrice: 900, minRamGb: 16),
+        );
+    }
+
     /** @return array<string, SsLvParser> */
     public static function parsers(): array
     {
         return [
             Category::Apartment->value => new ApartmentParser(),
             Category::House->value => new HouseParser(),
+            Category::Laptop->value => new LaptopParser(),
         ];
     }
 
@@ -53,6 +66,7 @@ final class SsLvFixtures
 <rss version="2.0">
 <channel><title>Test</title>
 <item>
+    <title><![CDATA[Test listing title]]></title>
     <link>{$url}</link>
     <pubDate>Thu, 28 May 2026 16:38:34 +0300</pubDate>
     <description><![CDATA[{$description}]]></description>

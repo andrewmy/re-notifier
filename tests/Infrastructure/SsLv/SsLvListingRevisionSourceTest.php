@@ -28,4 +28,21 @@ final class SsLvListingRevisionSourceTest extends TestCase
         self::assertSame(SsLvFixtures::APARTMENT_URL, $candidates[0]->listing->url);
         self::assertSame(ListingRevisionCandidate::contentHash($description), $candidates[0]->contentHash);
     }
+
+    public function testRssTitleIsPassedToParser(): void
+    {
+        $description = SsLvDescription::laptop(ram: 16, price: '899 €');
+        $source      = new SsLvListingRevisionSource(
+            SsLvFixtures::parsers(),
+            new NullLogger(),
+            SsLvFixtures::rssClient(SsLvFixtures::rssFeed(
+                description: $description,
+                url: 'https://www.ss.lv/msg/lv/electronics/computers/noutbooks/fxlge.html',
+            )),
+        );
+
+        $candidates = $source->candidates(SsLvFixtures::laptopProfile());
+
+        self::assertSame('Test listing title', $candidates[0]->listing->parsedFields['title']);
+    }
 }

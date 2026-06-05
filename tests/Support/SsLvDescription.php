@@ -52,4 +52,29 @@ Zem. pl.: <b>{$landArea} {$landUnit}</b><br/>
 Cena: <b>{$price}</b>
 HTML;
     }
+
+    public static function laptop(
+        string $brand = 'Apple',
+        string $model = 'Air',
+        string $display = '13"',
+        int $storage = 256,
+        int $ram = 16,
+        string $price = '899 €',
+        string|null $imageUrl = null,
+    ): string {
+        $image = $imageUrl === null ? '' : <<<HTML
+<a href="https://www.ss.lv/msg/lv/electronics/computers/noutbooks/example.html"><img align=right border=0 src="{$imageUrl}" width="174" height="130" alt=""></a>
+
+HTML;
+
+        return <<<HTML
+{$image}
+Marka: <b>{$brand}</b><br/>
+Modelis: <b>{$model}</b><br/>
+Displejs: <b>{$display}</b><br/>
+HDD: <b>{$storage}</b><br/>
+RAM: <b>{$ram}</b><br/>
+Cena: <b>{$price}</b>
+HTML;
+    }
 }

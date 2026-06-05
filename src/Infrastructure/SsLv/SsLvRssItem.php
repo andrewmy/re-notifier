@@ -10,6 +10,7 @@ final readonly class SsLvRssItem
         public string $publishedAt,
         public string $url,
         public string $description,
+        public string $title = '',
     ) {
     }
 }

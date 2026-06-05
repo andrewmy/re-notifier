@@ -67,6 +67,7 @@ final readonly class SsLvListingRevisionSource implements ListingRevisionSource
                     publishedAt: (string) $item->pubDate,
                     url: $url,
                     description: $description,
+                    title: (string) ($item->title ?? ''),
                 )),
             );
         }

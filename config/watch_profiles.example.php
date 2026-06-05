@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\ApartmentCriteria;
 use App\Domain\Category;
 use App\Domain\HouseCriteria;
+use App\Domain\LaptopCriteria;
 use App\Domain\WatchProfile;
 
 return [
@@ -19,5 +20,18 @@ return [
         category: Category::House,
         rssUrl: 'https://www.ss.lv/lv/real-estate/homes-summer-residences/riga/all/sell/rss/',
         criteria: new HouseCriteria(minSpace: 100, maxPrice: 260_000),
+    ),
+    new WatchProfile(
+        id: 'example-laptops',
+        category: Category::Laptop,
+        rssUrl: 'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+        criteria: new LaptopCriteria(
+            maxPrice: 1000,
+            minRamGb: 16,
+            minStorageGb: 512,
+            titleIncludesAny: ['M5', 'M4', 'M3', 'M2'],
+            titleExcludesAny: ['remontam', 'defekts'],
+            allowedBrands: ['Apple'],
+        ),
     ),
 ];

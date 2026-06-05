@@ -8,4 +8,5 @@ enum Category: string
 {
     case Apartment = 'apartment';
     case House     = 'house';
+    case Laptop    = 'laptop';
 }
