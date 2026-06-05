@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Deployer;
 
+use function dirname;
+use function escapeshellarg;
 use function file_exists;
+use function trim;
 
 require 'recipe/composer.php';
 
@@ -75,13 +78,30 @@ function uploadIfNotExists(
     }
 
     writeln('<info>Uploading local ' . $fileDescription . '...</info>');
-    upload($localFile, $remoteFile);
+    uploadFileOverSsh($localFile, $remoteFile);
+}
+
+function uploadFileOverSsh(string $localFile, string $remoteFile): void
+{
+    $parsedRemoteFile = parse($remoteFile);
+    $remoteDir        = dirname($parsedRemoteFile);
+
+    run('mkdir -p ' . escapeshellarg($remoteDir));
+
+    $host              = currentHost();
+    $connectionOptions = $host->connectionOptionsString();
+    $sshCommand        = trim('ssh ' . $connectionOptions . ' ' . escapeshellarg($host->connectionString()));
+    $remoteCommand     = 'cat > ' . escapeshellarg($parsedRemoteFile);
+
+    runLocally(
+        $sshCommand . ' ' . escapeshellarg($remoteCommand) . ' < ' . escapeshellarg($localFile),
+    );
 }
 
 desc('Sync docker-compose.yml to remote');
 task('docker:sync-compose', static function (): void {
     run('mkdir -p {{deploy_path}}');
-    upload(__DIR__ . '/docker-compose.yml', '{{deploy_path}}/docker-compose.yml');
+    uploadFileOverSsh(__DIR__ . '/docker-compose.yml', '{{deploy_path}}/docker-compose.yml');
 });
 
 desc('Upload local database if remote does not exist');
