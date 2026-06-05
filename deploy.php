@@ -30,7 +30,7 @@ host('your-ssh-host')
 host('reservoir')
     ->set('hostname', 'reservoir.local')
     ->set('remote_user', 'andr')
-    ->set('deploy_path', '/opt/stacks/re-notifier');
+    ->set('deploy_path', '/volume1/docker/stacks/re-notifier');
 
 /**
  * Hooks
