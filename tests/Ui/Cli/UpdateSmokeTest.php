@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Ui\Cli;
 
 use App\Application\ListingRevisionIntake;
+use App\Domain\Category;
+use App\Domain\LaptopCriteria;
 use App\Domain\WatchProfile;
+use App\Infrastructure\Banknote\BanknoteInventoryRevisionSource;
+use App\Infrastructure\ListingRevisionSourceRouter;
 use App\Infrastructure\SsLv\SsLvListingRevisionSource;
 use App\Tests\Support\Spy\NullEnricher;
 use App\Tests\Support\Spy\SpyListingRepository;
@@ -18,6 +22,10 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 final class UpdateSmokeTest extends TestCase
 {
@@ -118,6 +126,56 @@ final class UpdateSmokeTest extends TestCase
         self::assertStringContainsString('Brivibas', $msg);
     }
 
+    public function testRealModeMatchesLaptopFromSsLvAndBanknote(): void
+    {
+        $profile  = new WatchProfile(
+            id: 'apple-laptops',
+            category: Category::Laptop,
+            sourceUrls: [
+                'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+                'https://banknote.example.test/inventory/laptops/normalized.json',
+            ],
+            criteria: new LaptopCriteria(
+                maxPrice: 1000,
+                minRamGb: 16,
+                minStorageGb: 512,
+                brands: ['Apple'],
+            ),
+        );
+        $repo     = new SpyListingRepository();
+        $notifier = new SpyNotifier();
+        $command  = self::createMultiSourceLaptopCommand(
+            $profile,
+            SsLvFixtures::rssFeed(
+                SsLvDescription::laptop(model: 'MacBook Air M4', storage: 512, ram: 16, price: '899 €'),
+                'https://www.ss.lv/msg/lv/electronics/computers/noutbooks/example.html',
+            ),
+            new Response(body: json_encode([
+                'inventory' => [
+                    [
+                        'article' => 12345,
+                        'id' => 67890,
+                        'title' => 'Apple MacBook Air 13 M4',
+                        'price' => 899.0,
+                        'ram' => '16GB',
+                        'storage' => '512GB SSD',
+                        'url' => 'https://veikals.banknote.lv/lv/products/apple-macbook-air-67890',
+                    ],
+                ],
+            ], JSON_THROW_ON_ERROR)),
+            $repo,
+            $notifier,
+        );
+
+        $result = self::runCommand($command);
+
+        self::assertSame(0, $result);
+        self::assertTrue($repo->saved);
+        self::assertCount(2, $notifier->messages);
+        self::assertStringContainsString('https://www.ss.lv/msg/lv/electronics/computers/noutbooks/example.html', $notifier->messages[0]);
+        self::assertStringContainsString('https://veikals.banknote.lv/lv/products/apple-macbook-air-67890', $notifier->messages[1]);
+    }
+
     private static function createCommand(
         WatchProfile $profile,
         Response $rssResponse,
@@ -129,11 +187,41 @@ final class UpdateSmokeTest extends TestCase
         return new Update(
             [$profile],
             new ListingRevisionIntake(
-                new SsLvListingRevisionSource(
-                    SsLvFixtures::parsers(),
-                    new NullLogger(),
-                    $client,
-                ),
+                new ListingRevisionSourceRouter([
+                    new SsLvListingRevisionSource(
+                        SsLvFixtures::parsers(),
+                        new NullLogger(),
+                        $client,
+                    ),
+                ]),
+                $repo,
+                new NullLogger(),
+            ),
+            $repo,
+            $notifier,
+            new NullEnricher(),
+            new NullLogger(),
+        );
+    }
+
+    private static function createMultiSourceLaptopCommand(
+        WatchProfile $profile,
+        Response $rssResponse,
+        Response $banknoteResponse,
+        SpyListingRepository $repo,
+        SpyNotifier $notifier,
+    ): Update {
+        return new Update(
+            [$profile],
+            new ListingRevisionIntake(
+                new ListingRevisionSourceRouter([
+                    new SsLvListingRevisionSource(
+                        SsLvFixtures::parsers(),
+                        new NullLogger(),
+                        SsLvFixtures::rssClient($rssResponse),
+                    ),
+                    new BanknoteInventoryRevisionSource(SsLvFixtures::rssClient($banknoteResponse)),
+                ]),
                 $repo,
                 new NullLogger(),
             ),

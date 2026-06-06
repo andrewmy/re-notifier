@@ -7,7 +7,9 @@ use App\Application\ListingRevisionIntake;
 use App\Application\TelegramNotifier;
 use App\Application\TirgusDatiPriceHistoryEnricher;
 use App\Domain\Category;
+use App\Infrastructure\Banknote\BanknoteInventoryRevisionSource;
 use App\Infrastructure\DbalListingRepository;
+use App\Infrastructure\ListingRevisionSourceRouter;
 use App\Infrastructure\SsLv\ApartmentParser;
 use App\Infrastructure\SsLv\HouseParser;
 use App\Infrastructure\SsLv\LaptopParser;
@@ -42,15 +44,18 @@ $httpFactory = new HttpFactory();
 $watchProfiles  = WatchProfileLoader::load(__DIR__ . '/config/watch_profiles.local.php');
 $listingRepo    = new DbalListingRepository($_ENV['DB_DSN']);
 $revisionIntake = new ListingRevisionIntake(
-    new SsLvListingRevisionSource(
-        [
-            Category::Apartment->value => new ApartmentParser(),
-            Category::House->value => new HouseParser(),
-            Category::Laptop->value => new LaptopParser(),
-        ],
-        $logger,
-        $httpClient,
-    ),
+    new ListingRevisionSourceRouter([
+        new SsLvListingRevisionSource(
+            [
+                Category::Apartment->value => new ApartmentParser(),
+                Category::House->value => new HouseParser(),
+                Category::Laptop->value => new LaptopParser(),
+            ],
+            $logger,
+            $httpClient,
+        ),
+        new BanknoteInventoryRevisionSource($httpClient),
+    ]),
     $listingRepo,
     $logger,
 );

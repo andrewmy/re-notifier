@@ -24,14 +24,17 @@ return [
     new WatchProfile(
         id: 'example-laptops',
         category: Category::Laptop,
-        sourceUrls: ['https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/'],
+        sourceUrls: [
+            'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+            'https://banknote.example.test/inventory/laptops/normalized.json',
+        ],
         criteria: new LaptopCriteria(
             maxPrice: 1000,
             minRamGb: 16,
             minStorageGb: 512,
-            titleIncludesAny: ['M5', 'M4', 'M3', 'M2'],
-            titleExcludesAny: ['remontam', 'defekts'],
             brands: ['Apple'],
+            titleIncludesAny: ['M4', 'M3', 'M2', 'SSD'],
+            titleExcludesAny: ['2019', '2020', 'defekts', 'bojāts'],
         ),
     ),
 ];
