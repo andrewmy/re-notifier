@@ -31,7 +31,7 @@ return [
             minStorageGb: 512,
             titleIncludesAny: ['M5', 'M4', 'M3', 'M2'],
             titleExcludesAny: ['remontam', 'defekts'],
-            allowedBrands: ['Apple'],
+            brands: ['Apple'],
         ),
     ),
 ];

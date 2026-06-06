@@ -13,7 +13,7 @@ final class LaptopCriteria implements Criteria
     /**
      * @param list<string> $titleIncludesAny
      * @param list<string> $titleExcludesAny
-     * @param list<string> $allowedBrands
+     * @param list<string> $brands
      */
     public function __construct(
         public readonly int|null $maxPrice = null,
@@ -23,7 +23,7 @@ final class LaptopCriteria implements Criteria
         public readonly int $maxDisplayInches = 0,
         public readonly array $titleIncludesAny = [],
         public readonly array $titleExcludesAny = [],
-        public readonly array $allowedBrands = [],
+        public readonly array $brands = [],
     ) {
     }
 
@@ -35,18 +35,20 @@ final class LaptopCriteria implements Criteria
             return false;
         }
 
-        $title         = (string) ($listing->parsedFields['title'] ?? '');
-        $brand         = (string) ($listing->parsedFields['brand'] ?? '');
-        $displayInches = (int) ($listing->parsedFields['displayInches'] ?? 0);
+        $title           = (string) ($listing->parsedFields['title'] ?? '');
+        $brand           = (string) ($listing->parsedFields['brand'] ?? '');
+        $displayInches   = (int) ($listing->parsedFields['displayInches'] ?? 0);
+        $brandSearchText = $brand === '' ? $title : $brand;
+        $searchText      = $title . "\n" . $listing->description;
 
         return ($this->maxPrice === null || $listing->price <= $this->maxPrice || $listing->price === 0)
             && (int) ($listing->parsedFields['ramGb'] ?? 0) >= $this->minRamGb
             && (int) ($listing->parsedFields['storageGb'] ?? 0) >= $this->minStorageGb
             && ($this->minDisplayInches === 0 || $displayInches >= $this->minDisplayInches)
             && ($this->maxDisplayInches === 0 || $displayInches <= $this->maxDisplayInches)
-            && self::matchesAnyConfigured($brand, $this->allowedBrands)
-            && self::matchesAnyConfigured($title, $this->titleIncludesAny)
-            && ! self::containsAny($title, $this->titleExcludesAny);
+            && self::matchesAnyConfigured($brandSearchText, $this->brands)
+            && self::matchesAnyConfigured($searchText, $this->titleIncludesAny)
+            && ! self::containsAny($searchText, $this->titleExcludesAny);
     }
 
     /** @param list<string> $needles */
