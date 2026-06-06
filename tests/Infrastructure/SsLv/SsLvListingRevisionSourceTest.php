@@ -22,7 +22,8 @@ final class SsLvListingRevisionSourceTest extends TestCase
             SsLvFixtures::rssClient(SsLvFixtures::rssFeed($description)),
         );
 
-        $candidates = $source->candidates(SsLvFixtures::apartmentProfile());
+        $profile    = SsLvFixtures::apartmentProfile();
+        $candidates = $source->candidates($profile, $profile->sourceUrls[0]);
 
         self::assertCount(1, $candidates);
         self::assertSame(SsLvFixtures::APARTMENT_URL, $candidates[0]->listing->url);
@@ -41,7 +42,8 @@ final class SsLvListingRevisionSourceTest extends TestCase
             )),
         );
 
-        $candidates = $source->candidates(SsLvFixtures::laptopProfile());
+        $profile    = SsLvFixtures::laptopProfile();
+        $candidates = $source->candidates($profile, $profile->sourceUrls[0]);
 
         self::assertSame('Test listing title', $candidates[0]->listing->parsedFields['title']);
     }

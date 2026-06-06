@@ -148,7 +148,7 @@ final class LaptopCriteriaTest extends TestCase
         return new WatchProfile(
             id: 'test-laptops',
             category: Category::Laptop,
-            rssUrl: 'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+            sourceUrls: ['https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/'],
             criteria: $criteria,
         );
     }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Infrastructure\SsLv;
 
 use App\Domain\ListingRevisionCandidate;
-use App\Domain\ListingRevisionSource;
 use App\Domain\ListingRevisionSourceFailed;
 use App\Domain\WatchProfile;
+use App\Infrastructure\SelectableListingRevisionSource;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerInterface;
@@ -16,9 +16,12 @@ use Throwable;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 
-use const LIBXML_NOCDATA;
+use function parse_url;
 
-final readonly class SsLvListingRevisionSource implements ListingRevisionSource
+use const LIBXML_NOCDATA;
+use const PHP_URL_HOST;
+
+final readonly class SsLvListingRevisionSource implements SelectableListingRevisionSource
 {
     /** @param array<string, SsLvParser> $parsers */
     public function __construct(
@@ -28,14 +31,19 @@ final readonly class SsLvListingRevisionSource implements ListingRevisionSource
     ) {
     }
 
+    public function supports(string $sourceUrl): bool
+    {
+        return parse_url($sourceUrl, PHP_URL_HOST) === 'www.ss.lv';
+    }
+
     /** @return list<ListingRevisionCandidate> */
-    public function candidates(WatchProfile $watchProfile): array
+    public function candidates(WatchProfile $watchProfile, string $sourceUrl): array
     {
         $parser = $this->parsers[$watchProfile->category->value]
             ?? throw new InvalidArgumentException('No parser for category ' . $watchProfile->category->value);
 
         try {
-            $rssFeedBody = (string) $this->rssClient->get($watchProfile->rssUrl)->getBody();
+            $rssFeedBody = (string) $this->rssClient->get($sourceUrl)->getBody();
         } catch (GuzzleException $exception) {
             throw new ListingRevisionSourceFailed('Could not fetch RSS feed: ' . $exception->getMessage(), previous: $exception);
         }

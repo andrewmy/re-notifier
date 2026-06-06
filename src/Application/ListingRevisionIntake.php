@@ -24,30 +24,37 @@ final readonly class ListingRevisionIntake
     {
         $revisions = [];
 
-        foreach ($this->source->candidates($watchProfile) as $candidate) {
-            $listing = $candidate->listing;
+        foreach ($watchProfile->sourceUrls as $sourceUrl) {
+            foreach ($this->source->candidates($watchProfile, $sourceUrl) as $candidate) {
+                $listing = $candidate->listing;
 
-            if (! $watchProfile->matches($listing)) {
-                $this->logger->debug('Listing does not match', [
-                    'url' => $listing->url,
-                    'profile' => $watchProfile->id,
-                    'price' => $listing->price,
-                    'parsedFields' => $listing->parsedFields,
-                ]);
+                if (! $watchProfile->matches($listing)) {
+                    $this->logger->debug('Listing does not match', [
+                        'url' => $listing->url,
+                        'profile' => $watchProfile->id,
+                        'sourceUrl' => $sourceUrl,
+                        'price' => $listing->price,
+                        'parsedFields' => $listing->parsedFields,
+                    ]);
 
-                continue;
+                    continue;
+                }
+
+                if ($this->listingRepository->isSeen($watchProfile->id, $listing->url, $candidate->contentHash)) {
+                    $this->logger->debug('Listing revision already seen', [
+                        'url' => $listing->url,
+                        'profile' => $watchProfile->id,
+                        'sourceUrl' => $sourceUrl,
+                    ]);
+
+                    continue;
+                }
+
+                $revisions[] = new ListingRevisionCandidate(
+                    listing: $listing,
+                    contentHash: $candidate->contentHash,
+                );
             }
-
-            if ($this->listingRepository->isSeen($watchProfile->id, $listing->url, $candidate->contentHash)) {
-                $this->logger->debug('Listing revision already seen', ['url' => $listing->url, 'profile' => $watchProfile->id]);
-
-                continue;
-            }
-
-            $revisions[] = new ListingRevisionCandidate(
-                listing: $listing,
-                contentHash: $candidate->contentHash,
-            );
         }
 
         return $revisions;

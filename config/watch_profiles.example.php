@@ -12,19 +12,19 @@ return [
     new WatchProfile(
         id: 'example-apartments',
         category: Category::Apartment,
-        rssUrl: 'https://www.ss.lv/lv/real-estate/flats/riga/all/sell/rss/',
+        sourceUrls: ['https://www.ss.lv/lv/real-estate/flats/riga/all/sell/rss/'],
         criteria: new ApartmentCriteria(minRooms: 4, minSpace: 85, maxPrice: 260_000),
     ),
     new WatchProfile(
         id: 'example-houses',
         category: Category::House,
-        rssUrl: 'https://www.ss.lv/lv/real-estate/homes-summer-residences/riga/all/sell/rss/',
+        sourceUrls: ['https://www.ss.lv/lv/real-estate/homes-summer-residences/riga/all/sell/rss/'],
         criteria: new HouseCriteria(minSpace: 100, maxPrice: 260_000),
     ),
     new WatchProfile(
         id: 'example-laptops',
         category: Category::Laptop,
-        rssUrl: 'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+        sourceUrls: ['https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/'],
         criteria: new LaptopCriteria(
             maxPrice: 1000,
             minRamGb: 16,

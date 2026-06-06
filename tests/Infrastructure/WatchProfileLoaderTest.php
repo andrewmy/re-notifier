@@ -41,7 +41,7 @@ return [
     new WatchProfile(
         id: 'test-apartments',
         category: Category::Apartment,
-        rssUrl: 'https://www.ss.lv/ru/real-estate/flats/riga/all/rss/',
+        sourceUrls: ['https://www.ss.lv/ru/real-estate/flats/riga/all/rss/'],
         criteria: new ApartmentCriteria(minRooms: 4, minSpace: 85, maxPrice: 260000),
     ),
 ];

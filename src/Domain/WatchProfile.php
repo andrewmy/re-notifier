@@ -10,10 +10,11 @@ final class WatchProfile
 {
     public readonly string $hashtag;
 
+    /** @param non-empty-list<string> $sourceUrls */
     public function __construct(
         public readonly string $id,
         public readonly Category $category,
-        public readonly string $rssUrl,
+        public readonly array $sourceUrls,
         public readonly Criteria $criteria,
     ) {
         $this->hashtag = '#' . str_replace('-', '_', $this->id);

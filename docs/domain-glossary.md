@@ -5,7 +5,7 @@ Re Notifier watches SS.lv feeds and notifies when feed items satisfy configured 
 ## Language
 
 **WatchProfile**:
-One SS.lv feed, category, and matching intent. A WatchProfile is a business intent, not just a notification label; if one Listing is relevant to two WatchProfiles, it has two separate relevance histories. A WatchProfile has one stable human-readable id that is part of notification history and is also used to derive the notification hashtag; changing it requires an explicit history migration. SS.lv subcategories or location paths that constrain what can appear in a feed belong in the WatchProfile feed URL.
+One category, one matching intent, and one or more source URLs. A WatchProfile is a business intent, not just a notification label; if one Listing is relevant to two WatchProfiles, it has two separate relevance histories. A WatchProfile has one stable human-readable id that is part of notification history and is also used to derive the notification hashtag; changing it requires an explicit history migration. Source-specific constraints already encoded upstream, such as SS.lv location paths or Banknote inventory category files, belong in WatchProfile source URLs.
 _Avoid_: SearchProfile, profile when the meaning is ambiguous
 
 **Category**:

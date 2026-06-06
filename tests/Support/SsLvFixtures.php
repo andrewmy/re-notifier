@@ -26,7 +26,7 @@ final class SsLvFixtures
         return new WatchProfile(
             id: 'riga-family-apartments',
             category: Category::Apartment,
-            rssUrl: 'https://www.ss.lv/ru/real-estate/flats/riga/all/rss/',
+            sourceUrls: ['https://www.ss.lv/ru/real-estate/flats/riga/all/rss/'],
             criteria: new ApartmentCriteria(minRooms: 4, minSpace: 85, maxPrice: 260000),
         );
     }
@@ -36,7 +36,7 @@ final class SsLvFixtures
         return new WatchProfile(
             id: 'apple-laptops',
             category: Category::Laptop,
-            rssUrl: 'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+            sourceUrls: ['https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/'],
             criteria: new LaptopCriteria(maxPrice: 900, minRamGb: 16),
         );
     }

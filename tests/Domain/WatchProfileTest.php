@@ -9,6 +9,7 @@ use App\Domain\ApartmentListing;
 use App\Domain\Category;
 use App\Domain\HouseCriteria;
 use App\Domain\HouseListing;
+use App\Domain\LaptopCriteria;
 use App\Domain\WatchProfile;
 use App\Infrastructure\SsLv\ApartmentParser;
 use App\Infrastructure\SsLv\HouseParser;
@@ -21,6 +22,24 @@ use function number_format;
 
 final class WatchProfileTest extends TestCase
 {
+    public function testProfileHasMultipleSourceUrls(): void
+    {
+        $profile = new WatchProfile(
+            id: 'apple-laptops',
+            category: Category::Laptop,
+            sourceUrls: [
+                'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+                'https://banknote.example.test/inventory/laptops/normalized.json',
+            ],
+            criteria: new LaptopCriteria(maxPrice: 1000),
+        );
+
+        self::assertSame([
+            'https://www.ss.lv/lv/electronics/computers/noutbooks/sell/rss/',
+            'https://banknote.example.test/inventory/laptops/normalized.json',
+        ], $profile->sourceUrls);
+    }
+
     public function testApartmentProfileMatchesMatchingApartment(): void
     {
         $profile = SsLvFixtures::apartmentProfile();
@@ -75,7 +94,7 @@ final class WatchProfileTest extends TestCase
         $lenient = new WatchProfile(
             id: 'riga-lenient-apartments',
             category: Category::Apartment,
-            rssUrl: 'https://www.ss.lv/ru/real-estate/flats/riga/all/rss/',
+            sourceUrls: ['https://www.ss.lv/ru/real-estate/flats/riga/all/rss/'],
             criteria: new ApartmentCriteria(minRooms: 2, minSpace: 50, maxPrice: 300000),
         );
 
@@ -113,7 +132,7 @@ final class WatchProfileTest extends TestCase
         $profile = new WatchProfile(
             id: 'babites-large-land-houses',
             category: Category::House,
-            rssUrl: 'https://www.ss.lv/lv/real-estate/homes-summer-residences/riga-region/babites-pag/rss/',
+            sourceUrls: ['https://www.ss.lv/lv/real-estate/homes-summer-residences/riga-region/babites-pag/rss/'],
             criteria: new HouseCriteria(minSpace: 100, maxPrice: 300000, minLandArea: 1500),
         );
 
@@ -126,7 +145,7 @@ final class WatchProfileTest extends TestCase
         return new WatchProfile(
             id: 'babites-family-houses',
             category: Category::House,
-            rssUrl: 'https://www.ss.lv/lv/real-estate/homes-summer-residences/riga-region/babites-pag/rss/',
+            sourceUrls: ['https://www.ss.lv/lv/real-estate/homes-summer-residences/riga-region/babites-pag/rss/'],
             criteria: new HouseCriteria(minSpace: 100, maxPrice: 300000),
         );
     }
