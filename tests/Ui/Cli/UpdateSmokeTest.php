@@ -157,6 +157,7 @@ final class UpdateSmokeTest extends TestCase
                         'id' => 67890,
                         'title' => 'Apple MacBook Air 13 M4',
                         'price' => 899.0,
+                        'cpu' => 'Apple M4',
                         'ram' => '16GB',
                         'storage' => '512GB SSD',
                         'url' => 'https://veikals.banknote.lv/lv/products/apple-macbook-air-67890',
@@ -174,6 +175,9 @@ final class UpdateSmokeTest extends TestCase
         self::assertCount(2, $notifier->messages);
         self::assertStringContainsString('https://www.ss.lv/msg/lv/electronics/computers/noutbooks/example.html', $notifier->messages[0]);
         self::assertStringContainsString('https://veikals.banknote.lv/lv/products/apple-macbook-air-67890', $notifier->messages[1]);
+        self::assertStringContainsString('cpu: Apple M4', $notifier->messages[1]);
+        self::assertStringNotContainsString("brand: \n", $notifier->messages[1]);
+        self::assertStringNotContainsString('displayInches: 0', $notifier->messages[1]);
     }
 
     private static function createCommand(

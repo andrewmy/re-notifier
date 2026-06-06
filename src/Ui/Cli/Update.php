@@ -98,6 +98,10 @@ final class Update extends Command
 
             $strValue = (string) $value;
 
+            if ($strValue === '' || $strValue === '0') {
+                continue;
+            }
+
             if ($label === 'landArea') {
                 $lines[] = 'land: ' . $strValue . ' m²';
 

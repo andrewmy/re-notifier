@@ -94,6 +94,7 @@ final readonly class BanknoteInventoryRevisionSource implements SelectableListin
                     storageGb: self::storageGb($storage),
                     ramGb: self::integerFromText($ram),
                     title: $title,
+                    cpu: self::stringField($row, 'cpu'),
                 ),
                 contentHash: ListingRevisionCandidate::contentHash(self::hashContent($row)),
             );

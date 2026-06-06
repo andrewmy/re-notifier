@@ -28,11 +28,19 @@ final class LaptopListing implements Listing
         public readonly int $storageGb,
         public readonly int $ramGb,
         public readonly string $title,
+        public readonly string $cpu = '',
     ) {
-        $this->category     = Category::Laptop;
-        $this->parsedFields = [
+        $parsedFields = [
             'brand' => $this->brand,
             'model' => $this->model,
+        ];
+
+        if ($this->cpu !== '') {
+            $parsedFields['cpu'] = $this->cpu;
+        }
+
+        $this->category     = Category::Laptop;
+        $this->parsedFields = $parsedFields + [
             'displayInches' => $this->displayInches,
             'storageGb' => $this->storageGb,
             'ramGb' => $this->ramGb,

@@ -63,6 +63,7 @@ final class BanknoteInventoryRevisionSourceTest extends TestCase
         self::assertSame('https://veikals.banknote.lv/lv/products/apple-macbook-air-67890', $candidates[0]->listing->url);
         self::assertSame(899, $candidates[0]->listing->price);
         self::assertSame('', $candidates[0]->listing->parsedFields['brand']);
+        self::assertSame('Apple M4', $candidates[0]->listing->parsedFields['cpu']);
         self::assertSame(16, $candidates[0]->listing->parsedFields['ramGb']);
         self::assertSame(512, $candidates[0]->listing->parsedFields['storageGb']);
         self::assertSame(0, $candidates[0]->listing->parsedFields['displayInches']);
