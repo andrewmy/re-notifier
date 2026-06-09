@@ -11,6 +11,7 @@ use App\Infrastructure\Banknote\BanknoteInventoryRevisionSource;
 use App\Infrastructure\DbalListingRepository;
 use App\Infrastructure\ListingRevisionSourceRouter;
 use App\Infrastructure\SsLv\ApartmentParser;
+use App\Infrastructure\SsLv\HeadphoneParser;
 use App\Infrastructure\SsLv\HouseParser;
 use App\Infrastructure\SsLv\LaptopParser;
 use App\Infrastructure\SsLv\SsLvListingRevisionSource;
@@ -50,6 +51,7 @@ $revisionIntake = new ListingRevisionIntake(
                 Category::Apartment->value => new ApartmentParser(),
                 Category::House->value => new HouseParser(),
                 Category::Laptop->value => new LaptopParser(),
+                Category::Headphones->value => new HeadphoneParser(),
             ],
             $logger,
             $httpClient,

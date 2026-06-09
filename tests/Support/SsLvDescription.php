@@ -77,4 +77,18 @@ RAM: <b>{$ram}</b><br/>
 Cena: <b>{$price}</b>
 HTML;
     }
+
+    public static function headphones(
+        string $brand,
+        string $condition,
+        string $price,
+    ): string {
+        return <<<HTML
+<a href="https://www.ss.lv/msg/lv/electronics/audio-video-dvd-sat/audio/headphones/example.html"><img align=right border=0 src="https://i.ss.lv/gallery/8/1508/376828/75365434.t.jpg" width="174" height="130" alt=""></a>
+Marka: <b>{$brand}</b><br/>
+Stāv.: <b>{$condition}</b><br/>
+Cena: <b>{$price}</b><br/><br/>
+<b><a href="https://www.ss.lv/msg/lv/electronics/audio-video-dvd-sat/audio/headphones/example.html">Apskatīt sludinājumu</a></b><br/><br/>
+HTML;
+    }
 }

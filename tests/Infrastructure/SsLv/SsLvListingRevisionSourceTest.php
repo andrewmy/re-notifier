@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\SsLv;
 
+use App\Domain\Category;
 use App\Domain\ListingRevisionCandidate;
 use App\Infrastructure\SsLv\SsLvListingRevisionSource;
 use App\Tests\Support\SsLvDescription;
@@ -46,5 +47,30 @@ final class SsLvListingRevisionSourceTest extends TestCase
         $candidates = $source->candidates($profile, $profile->sourceUrls[0]);
 
         self::assertSame('Test listing title', $candidates[0]->listing->parsedFields['title']);
+    }
+
+    public function testParsesHeadphoneCandidates(): void
+    {
+        $description = SsLvDescription::headphones(
+            brand: 'Sennheiser',
+            condition: 'lietota',
+            price: '250 €',
+        );
+        $source      = new SsLvListingRevisionSource(
+            SsLvFixtures::parsers(),
+            new NullLogger(),
+            SsLvFixtures::rssClient(SsLvFixtures::rssFeed(
+                description: $description,
+                url: SsLvFixtures::HEADPHONE_URL,
+                title: 'Sennheiser HD 660S 2',
+                pubDate: 'Mon, 08 Jun 2026 18:55:13 +0300',
+            )),
+        );
+
+        $profile    = SsLvFixtures::headphonesProfile();
+        $candidates = $source->candidates($profile, $profile->sourceUrls[0]);
+
+        self::assertCount(1, $candidates);
+        self::assertSame(Category::Headphones, $candidates[0]->listing->category);
     }
 }

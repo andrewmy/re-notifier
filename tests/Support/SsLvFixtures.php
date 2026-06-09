@@ -6,9 +6,11 @@ namespace App\Tests\Support;
 
 use App\Domain\ApartmentCriteria;
 use App\Domain\Category;
+use App\Domain\HeadphoneCriteria;
 use App\Domain\LaptopCriteria;
 use App\Domain\WatchProfile;
 use App\Infrastructure\SsLv\ApartmentParser;
+use App\Infrastructure\SsLv\HeadphoneParser;
 use App\Infrastructure\SsLv\HouseParser;
 use App\Infrastructure\SsLv\LaptopParser;
 use App\Infrastructure\SsLv\SsLvParser;
@@ -20,6 +22,7 @@ use GuzzleHttp\Psr7\Response;
 final class SsLvFixtures
 {
     public const string APARTMENT_URL = 'https://www.ss.lv/msg/ru/real-estate/flats/riga/centre/example.html';
+    public const string HEADPHONE_URL = 'https://www.ss.lv/msg/lv/electronics/audio-video-dvd-sat/audio/headphones/bfkexe.html';
 
     public static function apartmentProfile(): WatchProfile
     {
@@ -41,6 +44,16 @@ final class SsLvFixtures
         );
     }
 
+    public static function headphonesProfile(): WatchProfile
+    {
+        return new WatchProfile(
+            id: 'test-headphones',
+            category: Category::Headphones,
+            sourceUrls: ['https://www.ss.lv/lv/electronics/audio-video-dvd-sat/audio/headphones/sell/rss/'],
+            criteria: new HeadphoneCriteria(modelIncludesAny: ['hd660s2']),
+        );
+    }
+
     /** @return array<string, SsLvParser> */
     public static function parsers(): array
     {
@@ -48,6 +61,7 @@ final class SsLvFixtures
             Category::Apartment->value => new ApartmentParser(),
             Category::House->value => new HouseParser(),
             Category::Laptop->value => new LaptopParser(),
+            Category::Headphones->value => new HeadphoneParser(),
         ];
     }
 
@@ -58,17 +72,21 @@ final class SsLvFixtures
         ]);
     }
 
-    public static function rssFeed(string $description, string $url = self::APARTMENT_URL): Response
-    {
+    public static function rssFeed(
+        string $description,
+        string $url = self::APARTMENT_URL,
+        string $title = 'Test listing title',
+        string $pubDate = 'Thu, 28 May 2026 16:38:34 +0300',
+    ): Response {
         return new Response(
             body: <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0">
 <channel><title>Test</title>
 <item>
-    <title><![CDATA[Test listing title]]></title>
+    <title><![CDATA[{$title}]]></title>
     <link>{$url}</link>
-    <pubDate>Thu, 28 May 2026 16:38:34 +0300</pubDate>
+    <pubDate>{$pubDate}</pubDate>
     <description><![CDATA[{$description}]]></description>
 </item>
 </channel>

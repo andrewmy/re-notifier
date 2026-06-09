@@ -9,7 +9,7 @@ One category, one matching intent, and one or more source URLs. A WatchProfile i
 _Avoid_: SearchProfile, profile when the meaning is ambiguous
 
 **Category**:
-A family of SS.lv feed items that share the same field language and matching shape, such as apartments, houses, or laptops. A WatchProfile has exactly one Category; apartment and house Categories are both real estate.
+A family of SS.lv feed items that share the same field language and matching shape, such as apartments, houses, laptops, or headphones. A WatchProfile has exactly one Category; apartment and house Categories are both real estate.
 _Avoid_: Type, section
 
 **Listing**:
@@ -45,3 +45,7 @@ Domain expert: "No. The id belongs to notification history. Migrate history expl
 Dev: "Should Babite be a house matching criterion?"
 
 Domain expert: "No, if SS.lv already exposes it as a separate RSS feed path. Put that constraint in the WatchProfile feed URL."
+
+Dev: "Can headphone model matching rely only on the structured Marka field?"
+
+Domain expert: "No. Sellers write models in title and description text with spaces, punctuation, and casing drift, so match against normalized seller-written text."

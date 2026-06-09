@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\ApartmentCriteria;
 use App\Domain\Category;
+use App\Domain\HeadphoneCriteria;
 use App\Domain\HouseCriteria;
 use App\Domain\LaptopCriteria;
 use App\Domain\WatchProfile;
@@ -35,6 +36,25 @@ return [
             brands: ['Apple'],
             titleIncludesAny: ['M4', 'M3', 'M2', 'SSD'],
             titleExcludesAny: ['2019', '2020', 'defekts', 'bojāts'],
+        ),
+    ),
+    new WatchProfile(
+        id: 'example-headphones',
+        category: Category::Headphones,
+        sourceUrls: ['https://www.ss.lv/lv/electronics/audio-video-dvd-sat/audio/headphones/sell/rss/'],
+        criteria: new HeadphoneCriteria(
+            modelIncludesAny: ['hd660s2', 'fiioft1pro', 'ft1pro'],
+            titleExcludesAny: [
+                'replica',
+                'replika',
+                'kopija',
+                'копия',
+                'fake',
+                'defekts',
+                'bojāts',
+                'remontam',
+                'nestrādā',
+            ],
         ),
     ),
 ];

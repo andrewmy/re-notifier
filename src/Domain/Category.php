@@ -6,7 +6,8 @@ namespace App\Domain;
 
 enum Category: string
 {
-    case Apartment = 'apartment';
-    case House     = 'house';
-    case Laptop    = 'laptop';
+    case Apartment  = 'apartment';
+    case House      = 'house';
+    case Laptop     = 'laptop';
+    case Headphones = 'headphones';
 }
