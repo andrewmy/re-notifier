@@ -152,6 +152,28 @@ final class LaptopCriteriaTest extends TestCase
         self::assertTrue($profile->matches($listing));
     }
 
+    public function testLaptopProfileIgnoresHtmlAttributesWhenSearchingDescription(): void
+    {
+        $profile = self::profileWith(new LaptopCriteria(titleIncludesAny: ['5090']));
+
+        $listing = self::laptopListing(
+            brand: 'Sapphire',
+            ram: 0,
+            storage: 0,
+            price: 400,
+            title: 'Sapphire pure rx 9060 xt gaming oc 16gb',
+            description: SsLvDescription::laptop(
+                brand: 'Sapphire',
+                model: '9060 xt',
+                ram: 0,
+                price: '400 €',
+                imageUrl: 'https://i.ss.lv/gallery/8/1466/366255/73250909.t.jpg',
+            ),
+        );
+
+        self::assertFalse($profile->matches($listing));
+    }
+
     public function testLaptopProfileMatchesParsedBrandBeforeTitle(): void
     {
         $profile = self::profileWith(new LaptopCriteria(brands: ['Apple']));

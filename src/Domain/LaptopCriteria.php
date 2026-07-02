@@ -7,6 +7,9 @@ namespace App\Domain;
 use function array_any;
 use function preg_match;
 use function preg_quote;
+use function preg_replace;
+use function strip_tags;
+use function trim;
 
 final class LaptopCriteria implements Criteria
 {
@@ -39,7 +42,7 @@ final class LaptopCriteria implements Criteria
         $brand           = (string) ($listing->parsedFields['brand'] ?? '');
         $displayInches   = (int) ($listing->parsedFields['displayInches'] ?? 0);
         $brandSearchText = $brand === '' ? $title : $brand;
-        $searchText      = $title . "\n" . $listing->description;
+        $searchText      = $title . "\n" . self::visibleDescriptionText($listing->description);
 
         return ($this->maxPrice === null || $listing->price <= $this->maxPrice || $listing->price === 0)
             && (int) ($listing->parsedFields['ramGb'] ?? 0) >= $this->minRamGb
@@ -65,5 +68,14 @@ final class LaptopCriteria implements Criteria
     private static function containsAny(string $haystack, array $needles): bool
     {
         return array_any($needles, static fn ($needle) => $needle !== '' && preg_match('/' . preg_quote((string) $needle, '/') . '/iu', $haystack) === 1);
+    }
+
+    private static function visibleDescriptionText(string $description): string
+    {
+        $normalized = preg_replace('/<br\s*\/?>/iu', "\n", $description);
+        $stripped   = strip_tags((string) $normalized);
+        $collapsed  = preg_replace('/[ \t]+/', ' ', $stripped);
+
+        return trim((string) $collapsed);
     }
 }
