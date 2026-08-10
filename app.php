@@ -30,20 +30,24 @@ require __DIR__ . '/vendor/autoload.php';
 $dotenv = new Dotenv();
 $dotenv->loadEnv(__DIR__ . '/.env');
 
-assert(is_string($_ENV['TG_URI']));
-assert(is_string($_ENV['DB_DSN']));
-assert(is_string($_ENV['LOG_DESTINATION']));
+$tgUri          = $_ENV['TG_URI'];
+$dbDsn          = $_ENV['DB_DSN'];
+$logDestination = $_ENV['LOG_DESTINATION'];
+
+assert(is_string($tgUri));
+assert(is_string($dbDsn));
+assert(is_string($logDestination));
 
 $app         = new Application();
 $logger      = new Logger(
     'main',
-    [new StreamHandler($_ENV['LOG_DESTINATION'])],
+    [new StreamHandler($logDestination)],
 );
 $httpClient  = new Client();
 $httpFactory = new HttpFactory();
 
 $watchProfiles  = WatchProfileLoader::load(__DIR__ . '/config/watch_profiles.local.php');
-$listingRepo    = new DbalListingRepository($_ENV['DB_DSN']);
+$listingRepo    = new DbalListingRepository($dbDsn);
 $revisionIntake = new ListingRevisionIntake(
     new ListingRevisionSourceRouter([
         new SsLvListingRevisionSource(
@@ -68,7 +72,7 @@ $app->addCommand(
         $revisionIntake,
         $listingRepo,
         new TelegramNotifier(
-            $_ENV['TG_URI'],
+            $tgUri,
             $httpClient,
             $httpFactory,
             $httpFactory,
