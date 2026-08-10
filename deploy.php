@@ -123,13 +123,18 @@ task('docker:env-upload', static function (): void {
     );
 });
 
-desc('Upload watch_profiles.local.php if remote does not exist');
+desc('Upload watch_profiles.local.php');
 task('docker:profiles-upload', static function (): void {
-    uploadIfNotExists(
-        __DIR__ . '/config/watch_profiles.local.php',
+    $localFile = __DIR__ . '/config/watch_profiles.local.php';
+
+    if (file_exists($localFile)) {
+        writeln('<comment>Local watch profiles config exists, will overwrite</comment>');
+    }
+
+    writeln('<info>Uploading local watch profiles config...</info>');
+    uploadFileOverSsh(
+        $localFile,
         '{{deploy_path}}/config/watch_profiles.local.php',
-        'watch profiles config',
-        'config',
     );
 });
 
