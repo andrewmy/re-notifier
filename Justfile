@@ -42,7 +42,7 @@ deptrac:
 
 # Lint markdown, don't look at externally sourced files
 markdown:
-    markdownlint README.md docs/**/*.md
+    rumdl check README.md docs/**/*.md
 
 # Deploy to the configured server
 deploy:
@@ -57,4 +57,4 @@ deploy-docker:
     php vendor/bin/dep deploy-docker reservoir
 
 # Full CI flow
-ci: composer-validate cbf require-check coverage stan deptrac security-check
+ci: composer-validate cbf require-check coverage stan deptrac security-check markdown

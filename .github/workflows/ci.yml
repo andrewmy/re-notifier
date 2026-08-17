@@ -21,8 +21,9 @@ jobs:
 
       - uses: taiki-e/install-action@just
 
-      - run: just ci
-
-      - uses: nosborn/github-action-markdown-cli@v3.3.0
+      - uses: rvben/rumdl@v0.2.55
         with:
-          files: README.md docs/**/*.md
+          version: 0.2.55
+          install-only: true
+
+      - run: just ci
