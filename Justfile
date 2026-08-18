@@ -40,9 +40,9 @@ coverage:
 deptrac:
     php vendor/bin/deptrac analyse
 
-# Lint markdown, don't look at externally sourced files
+# Lint markdown, skip ignored dirs (vendor/, var/) via .gitignore
 markdown:
-    rumdl check README.md docs/**/*.md
+    rumdl check .
 
 # Deploy to the configured server
 deploy:

@@ -21,9 +21,9 @@ jobs:
 
       - uses: taiki-e/install-action@just
 
-      - uses: rvben/rumdl@v0.2.55
+      # rumdl v0.2.55 (install-only; lint runs inside `just ci`)
+      - uses: rvben/rumdl@4997ff07b63c7a54d6a495ebcd3ce7f23ee1173f
         with:
-          version: 0.2.55
           install-only: true
 
       - run: just ci
