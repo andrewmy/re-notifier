@@ -9,7 +9,7 @@ use DateTimeImmutable;
 final readonly class EnrichmentData
 {
     public function __construct(
-        public string $tdId,
+        public string $historyUrl,
         public int $priceMin,
         public int $priceMax,
         public DateTimeImmutable $firstSeenAt,

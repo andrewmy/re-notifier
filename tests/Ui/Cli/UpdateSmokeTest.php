@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Ui\Cli;
 
+use App\Application\ListingEnricher;
 use App\Application\ListingRevisionIntake;
+use App\Application\TirgusDatiPriceHistoryEnricher;
 use App\Domain\Category;
 use App\Domain\LaptopCriteria;
 use App\Domain\WatchProfile;
@@ -17,8 +19,12 @@ use App\Tests\Support\Spy\SpyNotifier;
 use App\Tests\Support\SsLvDescription;
 use App\Tests\Support\SsLvFixtures;
 use App\Ui\Cli\Update;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -126,6 +132,60 @@ final class UpdateSmokeTest extends TestCase
         self::assertStringContainsString('Brivibas', $msg);
     }
 
+    public function testApartmentNotificationIncludesTirgusDatiHistory(): void
+    {
+        $profile  = SsLvFixtures::apartmentProfile();
+        $rss      = SsLvFixtures::rssFeed(SsLvDescription::apartment(rooms: 4, space: 90, price: '250,000 €'));
+        $repo     = new SpyListingRepository();
+        $notifier = new SpyNotifier();
+        $client   = new Client([
+            'handler' => HandlerStack::create(new MockHandler([
+                static function (RequestInterface $request): Response {
+                    self::assertSame('GET', $request->getMethod());
+                    self::assertSame('/vesture', $request->getUri()->getPath());
+                    self::assertSame(
+                        'q=https%3A%2F%2Fwww.ss.lv%2Fmsg%2Fru%2Freal-estate%2Fflats%2Friga%2Fcentre%2Fexample.html',
+                        $request->getUri()->getQuery(),
+                    );
+
+                    return new Response(
+                        body: <<<'HTML'
+<!doctype html>
+<html lang="lv">
+<head><title>Dzīvoklis — cenu vēsture — Tirgus Dati</title></head>
+<body>
+<table class="history">
+    <tbody>
+        <tr><td>09.08.2026 19:45</td><td>245 000 EUR</td><td>-5 000 EUR</td><td></td></tr>
+        <tr><td>19.01.2026 12:27</td><td>250 000 EUR</td><td>—</td><td>Sludinājums pievienots</td></tr>
+    </tbody>
+</table>
+</body>
+</html>
+HTML,
+                    );
+                },
+            ])),
+        ]);
+
+        $command = self::createCommand(
+            $profile,
+            $rss,
+            $repo,
+            $notifier,
+            new TirgusDatiPriceHistoryEnricher($client),
+        );
+
+        self::runCommand($command);
+
+        self::assertCount(1, $notifier->messages);
+        self::assertStringContainsString("€ min: 245 000\n€ max: 250 000\nFirst seen: 2026-01-19", $notifier->messages[0]);
+        self::assertStringContainsString(
+            'https://tirgusdati.lv/vesture?q=https%3A%2F%2Fwww.ss.lv%2Fmsg%2Fru%2Freal-estate%2Fflats%2Friga%2Fcentre%2Fexample.html',
+            $notifier->messages[0],
+        );
+    }
+
     public function testRealModeMatchesLaptopFromSsLvAndBanknote(): void
     {
         $profile  = new WatchProfile(
@@ -185,6 +245,7 @@ final class UpdateSmokeTest extends TestCase
         Response $rssResponse,
         SpyListingRepository $repo,
         SpyNotifier $notifier,
+        ListingEnricher|null $enricher = null,
     ): Update {
         $client = SsLvFixtures::rssClient($rssResponse);
 
@@ -203,7 +264,7 @@ final class UpdateSmokeTest extends TestCase
             ),
             $repo,
             $notifier,
-            new NullEnricher(),
+            $enricher ?? new NullEnricher(),
             new NullLogger(),
         );
     }

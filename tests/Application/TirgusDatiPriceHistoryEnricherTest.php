@@ -18,16 +18,11 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Ulid;
 
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 final class TirgusDatiPriceHistoryEnricherTest extends TestCase
 {
     public function testEnrichesApartmentListingWithPriceHistory(): void
     {
         $enricher = self::enricher([
-            self::meResponse(),
             self::historyResponse(),
         ]);
 
@@ -35,27 +30,18 @@ final class TirgusDatiPriceHistoryEnricherTest extends TestCase
         $result  = $enricher->enrich($listing);
 
         self::assertNotNull($result);
-        self::assertSame('td-123', $result->tdId);
+        self::assertSame(
+            'https://tirgusdati.lv/vesture?q=https%3A%2F%2Fwww.ss.lv%2Fmsg%2Fru%2Freal-estate%2Fflats%2Friga%2Fcentre%2Fexample.html',
+            $result->historyUrl,
+        );
         self::assertSame(200000, $result->priceMin);
         self::assertSame(280000, $result->priceMax);
-    }
-
-    public function testReturnsNullOnTokenFetchFailure(): void
-    {
-        $enricher = self::enricher([
-            new Response(status: 500),
-        ]);
-
-        $listing = self::apartmentListing();
-        $result  = $enricher->enrich($listing);
-
-        self::assertNull($result);
+        self::assertSame('2023-11-14', $result->firstSeenAt->format('Y-m-d'));
     }
 
     public function testReturnsNullOnHistoryFetchFailure(): void
     {
         $enricher = self::enricher([
-            self::meResponse(),
             new Response(status: 500),
         ]);
 
@@ -65,14 +51,11 @@ final class TirgusDatiPriceHistoryEnricherTest extends TestCase
         self::assertNull($result);
     }
 
-    public function testLogsHistoryPayloadContextWhenResponseShapeIsUnexpected(): void
+    public function testLogsHistoryPageContextWhenResponseShapeIsUnexpected(): void
     {
         $handler  = new TestHandler();
         $enricher = self::enricher([
-            self::meResponse(),
-            new Response(body: json_encode([
-                'timeline' => ['price_min' => 200000],
-            ], JSON_THROW_ON_ERROR)),
+            new Response(body: '<html><head><meta charset="utf-8"><title>Lapa nav atrasta — Tirgus Dati</title></head><body></body></html>'),
         ], new Logger('test', [$handler]));
 
         $listing = self::apartmentListing();
@@ -81,8 +64,38 @@ final class TirgusDatiPriceHistoryEnricherTest extends TestCase
         self::assertNull($result);
         self::assertCount(1, $handler->getRecords());
         self::assertTrue($handler->hasErrorThatContains($listing->url));
-        self::assertTrue($handler->hasErrorThatContains('response_keys=timeline'));
-        self::assertTrue($handler->hasErrorThatContains('timeline_keys=price_min'));
+        self::assertTrue($handler->hasErrorThatContains('status=200'));
+        self::assertTrue($handler->hasErrorThatContains('title=Lapa nav atrasta — Tirgus Dati'));
+    }
+
+    public function testReturnsNullAndLogsWhenHistoryPageIsEmpty(): void
+    {
+        $handler  = new TestHandler();
+        $enricher = self::enricher([
+            new Response(body: ''),
+        ], new Logger('test', [$handler]));
+
+        $listing = self::apartmentListing();
+        $result  = $enricher->enrich($listing);
+
+        self::assertNull($result);
+        self::assertTrue($handler->hasErrorThatContains($listing->url));
+        self::assertTrue($handler->hasErrorThatContains('empty response'));
+    }
+
+    public function testReturnsNullAndLogsWhenHistoryDateIsInvalid(): void
+    {
+        $handler  = new TestHandler();
+        $enricher = self::enricher([
+            self::historyResponse('31.02.2026 12:27'),
+        ], new Logger('test', [$handler]));
+
+        $listing = self::apartmentListing();
+        $result  = $enricher->enrich($listing);
+
+        self::assertNull($result);
+        self::assertTrue($handler->hasErrorThatContains($listing->url));
+        self::assertTrue($handler->hasErrorThatContains('invalid history date'));
     }
 
     public function testSkipsNonRealEstateListings(): void
@@ -112,29 +125,28 @@ final class TirgusDatiPriceHistoryEnricherTest extends TestCase
     private static function enricher(array $queue, LoggerInterface|null $logger = null): TirgusDatiPriceHistoryEnricher
     {
         $handler = HandlerStack::create(new MockHandler($queue));
-        $client  = new Client(['handler' => $handler, 'cookies' => true]);
+        $client  = new Client(['handler' => $handler]);
 
         return new TirgusDatiPriceHistoryEnricher($client, $logger);
     }
 
-    private static function meResponse(): Response
+    private static function historyResponse(string $firstSeenAt = '14.11.2023 22:13'): Response
     {
         return new Response(
-            body: json_encode(['key' => 'test-token'], JSON_THROW_ON_ERROR),
-        );
-    }
-
-    private static function historyResponse(): Response
-    {
-        return new Response(
-            body: json_encode([
-                'id' => 'td-123',
-                'timeline' => [
-                    'price_min' => 200000,
-                    'price_max' => 280000,
-                    'first' => 1700000000,
-                ],
-            ], JSON_THROW_ON_ERROR),
+            body: <<<HTML
+<!doctype html>
+<html lang="lv">
+<head><title>Dzīvoklis — cenu vēsture — Tirgus Dati</title></head>
+<body>
+<table class="history">
+    <tbody>
+        <tr><td>15.11.2023 12:27</td><td>200 000 EUR</td><td>-80 000 EUR</td><td></td></tr>
+        <tr><td>{$firstSeenAt}</td><td>280 000 EUR</td><td>—</td><td>Sludinājums pievienots</td></tr>
+    </tbody>
+</table>
+</body>
+</html>
+HTML,
         );
     }
 

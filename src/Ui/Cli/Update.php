@@ -121,11 +121,11 @@ final class Update extends Command
 
         if ($enrichment !== null) {
             $lines[] = sprintf(
-                "€ min: %s\n€ max: %s\nFirst seen: %s\nhttps://tirgusdati.lv/app/listings/history/%s",
+                "€ min: %s\n€ max: %s\nFirst seen: %s\n%s",
                 number_format($enrichment->priceMin, thousands_separator: ' '),
                 number_format($enrichment->priceMax, thousands_separator: ' '),
                 $enrichment->firstSeenAt->format('Y-m-d'),
-                $enrichment->tdId,
+                $enrichment->historyUrl,
             );
         }
 

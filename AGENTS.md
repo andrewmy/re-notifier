@@ -73,7 +73,7 @@ Runtime fails loudly if local config is missing.
   language changes can break rooms, space, price, or street extraction.
 - Match criteria live in per-category Criteria classes: `ApartmentCriteria`, `HouseCriteria`.
 - House land area in hectares is normalized to square meters in `HouseParser`.
-- TirgusDati integration relies on unauthenticated token bootstrap from
-  `/api/user/me`, then bearer auth for history search.
+- TirgusDati integration fetches public `/vesture?q=<listing URL>` HTML and
+  parses `table.history`; markup changes can break enrichment.
 - Docker deploy target is Deployer host `reservoir`.
 - Content hash uses md5 of single-line RSS description; URL is not permanent identity.

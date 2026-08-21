@@ -7,20 +7,24 @@ namespace App\Application;
 use App\Domain\Category;
 use App\Domain\Listing;
 use Carbon\CarbonImmutable;
+use Carbon\Exceptions\InvalidFormatException;
+use Dom\Element;
+use Dom\HTMLDocument;
+use Dom\XPath;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use JsonException;
 use Psr\Log\LoggerInterface;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 
-use function array_keys;
-use function array_map;
-use function implode;
-use function is_array;
-use function json_decode;
+use function max;
+use function min;
+use function preg_replace;
+use function rawurlencode;
+use function trim;
 
-use const JSON_THROW_ON_ERROR;
+use const Dom\HTML_NO_DEFAULT_NS;
+use const LIBXML_NOERROR;
 
 final readonly class TirgusDatiPriceHistoryEnricher implements ListingEnricher
 {
@@ -36,12 +40,7 @@ final readonly class TirgusDatiPriceHistoryEnricher implements ListingEnricher
             return null;
         }
 
-        $token = $this->fetchToken();
-        if ($token === null) {
-            return null;
-        }
-
-        return $this->fetchHistory($listing->url, $token);
+        return $this->fetchHistory($listing->url);
     }
 
     private static function supportsCategory(Category $category): bool
@@ -49,69 +48,78 @@ final readonly class TirgusDatiPriceHistoryEnricher implements ListingEnricher
         return $category === Category::Apartment || $category === Category::House;
     }
 
-    private function fetchToken(): string|null
+    private function fetchHistory(string $url): EnrichmentData|null
     {
-        try {
-            $response = json_decode(
-                (string) $this->client->get('https://api.tirgusdati.lv/api/user/me')->getBody(),
-                associative: true,
-                flags: JSON_THROW_ON_ERROR,
-            );
-
-            Assert::isArray($response);
-            Assert::keyExists($response, 'key');
-
-            return (string) $response['key'];
-        } catch (GuzzleException | JsonException | InvalidArgumentException $exception) {
-            $this->logger?->error('Could not fetch TirgusDati token: ' . $exception->getMessage());
-
-            return null;
-        }
-    }
-
-    private function fetchHistory(string $url, string $token): EnrichmentData|null
-    {
-        $payload    = null;
-        $statusCode = null;
+        $historyUrl    = 'https://tirgusdati.lv/vesture?q=' . rawurlencode($url);
+        $statusCode    = null;
+        $responseTitle = null;
 
         try {
-            $response   = $this->client->post('https://api.tirgusdati.lv/api/listings/history/search', [
-                'headers' => ['Authorization' => 'Bearer ' . $token],
-                'json' => ['url' => $url],
-            ]);
+            $response   = $this->client->get($historyUrl);
             $statusCode = $response->getStatusCode();
-            $payload    = json_decode(
-                (string) $response->getBody(),
-                associative: true,
-                flags: JSON_THROW_ON_ERROR,
-            );
+            $html       = (string) $response->getBody();
+            Assert::stringNotEmpty($html, 'TirgusDati returned empty response');
 
-            Assert::isArray($payload);
-            Assert::keyExists($payload, 'id');
-            Assert::keyExists($payload, 'timeline');
-            Assert::isArray($payload['timeline']);
-            Assert::keyExists($payload['timeline'], 'price_min');
-            Assert::keyExists($payload['timeline'], 'price_max');
-            Assert::keyExists($payload['timeline'], 'first');
+            $document = HTMLDocument::createFromString($html, LIBXML_NOERROR | HTML_NO_DEFAULT_NS);
+            $xpath    = new XPath($document);
+
+            $title         = $xpath->query('//title')->item(0);
+            $responseTitle = $title === null ? '' : trim($title->textContent ?? '');
+            $rows          = $xpath->query(
+                "//table[contains(concat(' ', normalize-space(@class), ' '), ' history ')]/tbody/tr",
+            );
+            Assert::greaterThan($rows->length, 0, 'TirgusDati response contains no history rows');
+
+            $prices = [];
+            $dates  = [];
+
+            foreach ($rows as $row) {
+                Assert::isInstanceOf($row, Element::class);
+
+                $cells = $xpath->query('./td', $row);
+                Assert::greaterThanEq($cells->length, 2, 'TirgusDati history row contains fewer than two cells');
+
+                $dateCell  = $cells->item(0);
+                $priceCell = $cells->item(1);
+
+                Assert::isInstanceOf($dateCell, Element::class);
+                Assert::isInstanceOf($priceCell, Element::class);
+
+                $dateText  = trim($dateCell->textContent ?? '');
+                $priceText = trim($priceCell->textContent ?? '');
+                $price     = preg_replace('/\D+/', '', $priceText);
+
+                Assert::stringNotEmpty($dateText);
+                Assert::stringNotEmpty($price);
+
+                $date = CarbonImmutable::createFromFormat('!d.m.Y H:i', $dateText, 'Europe/Riga');
+                Assert::isInstanceOf($date, CarbonImmutable::class);
+                Assert::same(
+                    $date->format('d.m.Y H:i'),
+                    $dateText,
+                    'TirgusDati response contains invalid history date',
+                );
+
+                $dates[]  = $date;
+                $prices[] = (int) $price;
+            }
+
+            Assert::notEmpty($dates);
 
             return new EnrichmentData(
-                tdId: (string) $payload['id'],
-                priceMin: (int) $payload['timeline']['price_min'],
-                priceMax: (int) $payload['timeline']['price_max'],
-                firstSeenAt: CarbonImmutable::createFromTimestamp((string) $payload['timeline']['first']),
+                historyUrl: $historyUrl,
+                priceMin: min($prices),
+                priceMax: max($prices),
+                firstSeenAt: min($dates),
             );
-        } catch (GuzzleException | JsonException | InvalidArgumentException $exception) {
+        } catch (GuzzleException | InvalidFormatException | InvalidArgumentException $exception) {
             $message = 'Could not fetch TirgusDati history for ' . $url . ': ' . $exception->getMessage();
             if ($statusCode !== null) {
                 $message .= '; status=' . $statusCode;
             }
 
-            if (is_array($payload)) {
-                $message .= '; response_keys=' . implode(',', array_map('strval', array_keys($payload)));
-
-                if (isset($payload['timeline']) && is_array($payload['timeline'])) {
-                    $message .= '; timeline_keys=' . implode(',', array_map('strval', array_keys($payload['timeline'])));
-                }
+            if ($responseTitle !== null && $responseTitle !== '') {
+                $message .= '; title=' . $responseTitle;
             }
 
             $this->logger?->error($message);

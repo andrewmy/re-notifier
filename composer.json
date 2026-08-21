@@ -4,6 +4,7 @@
     "description": "Real Estate ad notifier",
     "require": {
         "php": "^8.5",
+        "ext-dom": "*",
         "ext-libxml": "*",
         "ext-simplexml": "*",
         "doctrine/dbal": "^4.0",
