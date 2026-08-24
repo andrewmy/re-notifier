@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d9b9d7da3a4cacc663f71b6a86c54981",
+    "content-hash": "ffedda8b8e6ede8e4831bce6910d0e33",
     "packages": [
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -1176,16 +1176,16 @@
         },
         {
             "name": "symfony/console",
-            "version": "v7.4.16",
+            "version": "v7.4.17",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "f4c69c9aed03abf933b294257d618bdd9b30a06d"
+                "reference": "962e18f09ebe68a49039b4c82fc0ea4871824fca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/f4c69c9aed03abf933b294257d618bdd9b30a06d",
-                "reference": "f4c69c9aed03abf933b294257d618bdd9b30a06d",
+                "url": "https://api.github.com/repos/symfony/console/zipball/962e18f09ebe68a49039b4c82fc0ea4871824fca",
+                "reference": "962e18f09ebe68a49039b4c82fc0ea4871824fca",
                 "shasum": ""
             },
             "require": {
@@ -1250,7 +1250,7 @@
                 "terminal"
             ],
             "support": {
-                "source": "https://github.com/symfony/console/tree/v7.4.16"
+                "source": "https://github.com/symfony/console/tree/v7.4.17"
             },
             "funding": [
                 {
@@ -1270,7 +1270,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-07-31T12:37:14+00:00"
+            "time": "2026-08-21T12:09:28+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -2571,30 +2571,30 @@
         },
         {
             "name": "deployer/deployer",
-            "version": "v8.0.0-alpha.3",
+            "version": "v8.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/deployphp/deployer.git",
-                "reference": "b4dba6852af10223224f4fdbb223598dfff0d378"
+                "reference": "199273500b4f14ff5eafd76bea524e5d44bcaff3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/deployphp/deployer/zipball/b4dba6852af10223224f4fdbb223598dfff0d378",
-                "reference": "b4dba6852af10223224f4fdbb223598dfff0d378",
+                "url": "https://api.github.com/repos/deployphp/deployer/zipball/199273500b4f14ff5eafd76bea524e5d44bcaff3",
+                "reference": "199273500b4f14ff5eafd76bea524e5d44bcaff3",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.2",
-                "symfony/console": "^7.2",
-                "symfony/process": "^7.2",
-                "symfony/yaml": "^7.2"
+                "maml/maml": "^3.2",
+                "php": "^8.3",
+                "symfony/console": "^7.4.0 || ^8.0.0",
+                "symfony/process": "^7.4.0 || ^8.0.0",
+                "symfony/yaml": "^7.4.0 || ^8.0.0"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.68",
-                "pestphp/pest": "^3.3",
-                "phpstan/phpstan": "^1.4",
-                "phpunit/php-code-coverage": "^11.0",
-                "phpunit/phpunit": "^11.4"
+                "phpstan/phpstan": "^2.1",
+                "phpunit/php-code-coverage": "^12.0",
+                "phpunit/phpunit": "^12.5"
             },
             "bin": [
                 "bin/dep"
@@ -2632,7 +2632,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-10-28T10:45:41+00:00"
+            "time": "2026-05-18T16:59:34+00:00"
         },
         {
             "name": "deptrac/deptrac",
@@ -2818,6 +2818,60 @@
                 "type"
             ],
             "time": "2026-02-19T20:12:01+00:00"
+        },
+        {
+            "name": "maml/maml",
+            "version": "v3.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/maml-dev/maml-php.git",
+                "reference": "f11cdff4325bf399f23c33fc1995450e40ac0854"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/maml-dev/maml-php/zipball/f11cdff4325bf399f23c33fc1995450e40ac0854",
+                "reference": "f11cdff4325bf399f23c33fc1995450e40ac0854",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "php": ">=8.2"
+            },
+            "require-dev": {
+                "php-cs-fixer/shim": "^3.94",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^10.0 || ^11.0 || ^12.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Maml\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Anton Medvedev",
+                    "email": "anton@medv.io"
+                }
+            ],
+            "description": "MAML Parser",
+            "homepage": "https://maml.dev",
+            "keywords": [
+                "config",
+                "configuration",
+                "maml",
+                "parser",
+                "serializer"
+            ],
+            "support": {
+                "issues": "https://github.com/maml-dev/maml-php/issues",
+                "source": "https://github.com/maml-dev/maml-php/tree/v3.2.0"
+            },
+            "time": "2026-04-12T16:50:36+00:00"
         },
         {
             "name": "myclabs/deep-copy",
@@ -7013,20 +7067,20 @@
         },
         {
             "name": "symfony/process",
-            "version": "v7.4.13",
+            "version": "v8.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/process.git",
-                "reference": "f5804be144caceb570f6747519999636b664f24c"
+                "reference": "d863f5e70d7c87abb906ac11b61f83036093000b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/process/zipball/f5804be144caceb570f6747519999636b664f24c",
-                "reference": "f5804be144caceb570f6747519999636b664f24c",
+                "url": "https://api.github.com/repos/symfony/process/zipball/d863f5e70d7c87abb906ac11b61f83036093000b",
+                "reference": "d863f5e70d7c87abb906ac11b61f83036093000b",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.2"
+                "php": ">=8.4.1"
             },
             "type": "library",
             "autoload": {
@@ -7054,7 +7108,7 @@
             "description": "Executes commands in sub-processes",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/process/tree/v7.4.13"
+                "source": "https://github.com/symfony/process/tree/v8.1.5"
             },
             "funding": [
                 {
@@ -7074,7 +7128,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-23T16:05:06+00:00"
+            "time": "2026-08-21T17:47:34+00:00"
         },
         {
             "name": "symfony/var-dumper",
@@ -7248,28 +7302,28 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v7.4.15",
+            "version": "v8.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "e101850ded5d2c0d44bf32abb8996404afec2dec"
+                "reference": "b3fc9e8888eeb9daddc33bfbd15d282a61f543cd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/e101850ded5d2c0d44bf32abb8996404afec2dec",
-                "reference": "e101850ded5d2c0d44bf32abb8996404afec2dec",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/b3fc9e8888eeb9daddc33bfbd15d282a61f543cd",
+                "reference": "b3fc9e8888eeb9daddc33bfbd15d282a61f543cd",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.2",
-                "symfony/deprecation-contracts": "^2.5|^3",
+                "php": ">=8.4.1",
                 "symfony/polyfill-ctype": "^1.8"
             },
             "conflict": {
-                "symfony/console": "<6.4"
+                "symfony/console": "<7.4"
             },
             "require-dev": {
-                "symfony/console": "^6.4|^7.0|^8.0"
+                "symfony/console": "^7.4|^8.0",
+                "yaml/yaml-test-suite": "*"
             },
             "bin": [
                 "Resources/bin/yaml-lint"
@@ -7300,7 +7354,7 @@
             "description": "Loads and dumps YAML files",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/yaml/tree/v7.4.15"
+                "source": "https://github.com/symfony/yaml/tree/v8.1.5"
             },
             "funding": [
                 {
@@ -7320,7 +7374,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-07-21T15:13:06+00:00"
+            "time": "2026-08-21T12:16:08+00:00"
         },
         {
             "name": "theseer/tokenizer",
@@ -7376,7 +7430,6 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "deployer/deployer": 15,
         "roave/security-advisories": 20
     },
     "prefer-stable": false,

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Deployer;
 
+use function array_map;
 use function dirname;
 use function escapeshellarg;
 use function file_exists;
-use function trim;
+use function implode;
 
 require 'recipe/composer.php';
 
@@ -89,8 +90,11 @@ function uploadFileOverSsh(string $localFile, string $remoteFile): void
     run('mkdir -p ' . escapeshellarg($remoteDir));
 
     $host              = currentHost();
-    $connectionOptions = $host->connectionOptionsString();
-    $sshCommand        = trim('ssh ' . $connectionOptions . ' ' . escapeshellarg($host->connectionString()));
+    $connectionOptions = array_map(
+        static fn (string $option): string => escapeshellarg($option),
+        $host->connectionOptions(),
+    );
+    $sshCommand        = 'ssh ' . implode(' ', $connectionOptions) . ' ' . escapeshellarg($host->connectionString());
     $remoteCommand     = 'cat > ' . escapeshellarg($parsedRemoteFile);
 
     runLocally(
