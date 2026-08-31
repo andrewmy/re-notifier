@@ -2,6 +2,9 @@
 .github
 .idea
 .claude
+.opencode
+.phpunit.cache
+.rumdl_cache
 var/
 vendor/
 .env
