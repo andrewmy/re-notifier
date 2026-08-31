@@ -1,12 +1,16 @@
+FROM php:8.5.1-cli-alpine AS builder
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+
+RUN composer install --no-dev --no-interaction --optimize-autoloader --no-cache
+
 FROM php:8.5.1-cli-alpine
 
-LABEL org.opencontainers.image.source = "https://github.com/andrewmy/re-notifier"
-
-RUN apk add --no-cache \
-        sqlite-dev \
-    && docker-php-ext-install -j$(nproc) \
-        pdo_sqlite \
-    && rm -rf /var/cache/apk/*
+LABEL org.opencontainers.image.source="https://github.com/andrewmy/re-notifier"
 
 ARG TARGETARCH
 ARG SUPERCRONIC_VERSION=v0.2.41
@@ -19,16 +23,9 @@ RUN addgroup -g 1000 app \
 
 WORKDIR /app
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# composer files first for better layer caching
-COPY --chown=app:app composer.json composer.lock ./
-
-RUN composer install --no-dev --no-interaction --optimize-autoloader --no-cache
+COPY --from=builder /app/vendor ./vendor
 
 COPY --chown=app:app . .
-
-RUN rm -f /usr/bin/composer
 
 RUN mkdir -p /app/var && chown app:app /app/var
 
