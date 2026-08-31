@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 use App\Application\ListingRevisionIntake;
 use App\Application\TelegramNotifier;
+use App\Application\TirgusDatiListingMatcher;
 use App\Application\TirgusDatiPriceHistoryEnricher;
 use App\Domain\Category;
 use App\Infrastructure\Banknote\BanknoteInventoryRevisionSource;
@@ -78,7 +79,12 @@ $app->addCommand(
             $httpFactory,
             $logger,
         ),
-        new TirgusDatiPriceHistoryEnricher(new Client(['cookies' => true]), $logger),
+        new TirgusDatiPriceHistoryEnricher(
+            new Client(['cookies' => true]),
+            $listingRepo,
+            new TirgusDatiListingMatcher(),
+            $logger,
+        ),
         $logger,
     ),
 );

@@ -112,6 +112,82 @@ final class DbalListingRepositoryTest extends TestCase
         self::assertSame([], $rows);
     }
 
+    public function testFindsPreviousUrlForSameExactProperty(): void
+    {
+        $repository = $this->repository();
+        $previous   = self::apartmentListing(
+            url: 'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/bfpxb.html',
+            description: SsLvDescription::apartment(street: 'Valdemāra 39', rooms: 4, space: 149, floor: '7/7'),
+        );
+        $current    = self::apartmentListing(
+            url: 'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/felxi.html',
+            description: SsLvDescription::apartment(street: 'Valdemāra 39', rooms: 4, space: 149, floor: '7/7'),
+        );
+
+        $repository->save($previous, 'riga-family-apartments', ListingRevisionCandidate::contentHash($previous->description));
+
+        self::assertSame([$previous->url], $repository->findPreviousUrlsForSameProperty($current));
+    }
+
+    public function testDoesNotMatchDifferentPropertyAtReusedUrl(): void
+    {
+        $repository = $this->repository();
+        $previous   = self::apartmentListing(
+            url: 'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/bfpxb.html',
+            description: SsLvDescription::apartment(street: 'Valdemāra 39', rooms: 4, space: 149, floor: '7/7'),
+        );
+        $current    = self::apartmentListing(
+            url: 'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/felxi.html',
+            description: SsLvDescription::apartment(street: 'Čaka 133', rooms: 2, space: 40, floor: '2/6'),
+        );
+
+        $repository->save($previous, 'riga-family-apartments', ListingRevisionCandidate::contentHash($previous->description));
+
+        self::assertSame([], $repository->findPreviousUrlsForSameProperty($current));
+    }
+
+    public function testPreviousUrlIsReturnedOnceAcrossProfilesAndRevisions(): void
+    {
+        $repository            = $this->repository();
+        $previousFirstProfile  = self::apartmentListing(
+            url: 'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/bfpxb.html',
+            description: SsLvDescription::apartment(street: 'Valdemāra 39', rooms: 4, space: 149, floor: '7/7', price: '234,900 €'),
+        );
+        $previousSecondProfile = self::apartmentListing(
+            url: 'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/bfpxb.html',
+            description: SsLvDescription::apartment(street: 'Valdemāra 39', rooms: 4, space: 149, floor: '7/7', price: '234,900 €'),
+        );
+        $current               = self::apartmentListing(
+            url: 'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/felxi.html',
+            description: SsLvDescription::apartment(street: 'Valdemāra 39', rooms: 4, space: 149, floor: '7/7', price: '229,900 €'),
+        );
+
+        $repository->save(
+            $previousFirstProfile,
+            'riga-family-apartments',
+            ListingRevisionCandidate::contentHash($previousFirstProfile->description),
+        );
+        $repository->save(
+            $previousSecondProfile,
+            'riga-lenient-apartments',
+            ListingRevisionCandidate::contentHash($previousSecondProfile->description),
+        );
+
+        self::assertSame([$previousFirstProfile->url], $repository->findPreviousUrlsForSameProperty($current));
+    }
+
+    public function testCurrentUrlAndIncompleteStoredRowsAreExcluded(): void
+    {
+        $repository = $this->repository();
+        $current    = self::apartmentListing(
+            description: SsLvDescription::apartment(street: 'Valdemāra 39', rooms: 4, space: 149, floor: '7/7'),
+        );
+
+        $repository->save($current, 'riga-family-apartments', ListingRevisionCandidate::contentHash($current->description));
+
+        self::assertSame([], $repository->findPreviousUrlsForSameProperty($current));
+    }
+
     private function repository(): DbalListingRepository
     {
         $this->dbFile = tempnam(sys_get_temp_dir(), 're-notifier-test-');

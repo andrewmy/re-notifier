@@ -6,6 +6,7 @@ namespace App\Tests\Ui\Cli;
 
 use App\Application\ListingEnricher;
 use App\Application\ListingRevisionIntake;
+use App\Application\TirgusDatiListingMatcher;
 use App\Application\TirgusDatiPriceHistoryEnricher;
 use App\Domain\Category;
 use App\Domain\LaptopCriteria;
@@ -30,6 +31,7 @@ use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
 use function json_encode;
+use function rawurlencode;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -74,11 +76,13 @@ final class UpdateSmokeTest extends TestCase
         $rss      = SsLvFixtures::rssFeed(SsLvDescription::apartment(rooms: 2, space: 40, price: '250,000 €'));
         $repo     = new SpyListingRepository();
         $notifier = new SpyNotifier();
+        $enricher = new NullEnricher();
 
-        $command = self::createCommand($profile, $rss, $repo, $notifier);
+        $command = self::createCommand($profile, $rss, $repo, $notifier, $enricher);
 
         self::runCommand($command);
 
+        self::assertSame(0, $enricher->calls);
         self::assertFalse($repo->saved);
         self::assertEmpty($notifier->messages);
     }
@@ -90,11 +94,13 @@ final class UpdateSmokeTest extends TestCase
         $rss      = SsLvFixtures::rssFeed($desc);
         $repo     = new SpyListingRepository(seen: true);
         $notifier = new SpyNotifier();
+        $enricher = new NullEnricher();
 
-        $command = self::createCommand($profile, $rss, $repo, $notifier);
+        $command = self::createCommand($profile, $rss, $repo, $notifier, $enricher);
 
         self::runCommand($command);
 
+        self::assertSame(0, $enricher->calls);
         self::assertFalse($repo->saved);
         self::assertEmpty($notifier->messages);
     }
@@ -173,7 +179,11 @@ HTML,
             $rss,
             $repo,
             $notifier,
-            new TirgusDatiPriceHistoryEnricher($client),
+            new TirgusDatiPriceHistoryEnricher(
+                $client,
+                $repo,
+                new TirgusDatiListingMatcher(),
+            ),
         );
 
         self::runCommand($command);
@@ -184,6 +194,77 @@ HTML,
             'https://tirgusdati.lv/vesture?q=https%3A%2F%2Fwww.ss.lv%2Fmsg%2Fru%2Freal-estate%2Fflats%2Friga%2Fcentre%2Fexample.html',
             $notifier->messages[0],
         );
+    }
+
+    public function testNotificationIncludesPreviousMatchingHistoryLinks(): void
+    {
+        $profile  = SsLvFixtures::apartmentProfile();
+        $rss      = SsLvFixtures::rssFeed(SsLvDescription::apartment(rooms: 4, space: 90, price: '250,000 €'));
+        $repo     = new SpyListingRepository(previousUrls: ['https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/bfpxb.html']);
+        $notifier = new SpyNotifier();
+        $client   = new Client([
+            'handler' => HandlerStack::create(new MockHandler([self::tirgusDatiHistoryResponse()])),
+        ]);
+
+        $command = self::createCommand(
+            $profile,
+            $rss,
+            $repo,
+            $notifier,
+            new TirgusDatiPriceHistoryEnricher($client, $repo, new TirgusDatiListingMatcher()),
+        );
+
+        self::runCommand($command);
+
+        $currentHistoryUrl  = 'https://tirgusdati.lv/vesture?q=' . rawurlencode(SsLvFixtures::APARTMENT_URL);
+        $previousHistoryUrl = 'https://tirgusdati.lv/vesture?q=' . rawurlencode(
+            'https://www.ss.lv/msg/lv/real-estate/flats/riga/centre/bfpxb.html',
+        );
+
+        self::assertCount(1, $notifier->messages);
+        self::assertStringContainsString(
+            "TirgusDati URL history:\n"
+            . "€ min: 245 000\n"
+            . "€ max: 250 000\n"
+            . "First seen: 2026-01-19\n"
+            . "Current listing history:\n"
+            . $currentHistoryUrl . "\n"
+            . "Previous matching listing history:\n"
+            . $previousHistoryUrl,
+            $notifier->messages[0],
+        );
+    }
+
+    public function testNotificationWarnsWhenHistoryDescribesDifferentListing(): void
+    {
+        $profile  = SsLvFixtures::apartmentProfile();
+        $rss      = SsLvFixtures::rssFeed(SsLvDescription::apartment(street: 'Čaka 133', rooms: 4, space: 90, price: '250,000 €'));
+        $repo     = new SpyListingRepository();
+        $notifier = new SpyNotifier();
+        $client   = new Client([
+            'handler' => HandlerStack::create(new MockHandler([
+                self::tirgusDatiHistoryResponse(address: 'Valdemāra 39, Rīga', area: '149 m²'),
+            ])),
+        ]);
+
+        $command = self::createCommand(
+            $profile,
+            $rss,
+            $repo,
+            $notifier,
+            new TirgusDatiPriceHistoryEnricher($client, $repo, new TirgusDatiListingMatcher()),
+        );
+
+        self::runCommand($command);
+
+        $currentHistoryUrl = 'https://tirgusdati.lv/vesture?q=' . rawurlencode(SsLvFixtures::APARTMENT_URL);
+
+        self::assertCount(1, $notifier->messages);
+        self::assertStringContainsString(
+            '⚠ TirgusDati history appears to belong to a different listing previously using this SS.lv URL.',
+            $notifier->messages[0],
+        );
+        self::assertStringContainsString($currentHistoryUrl, $notifier->messages[0]);
     }
 
     public function testRealModeMatchesLaptopFromSsLvAndBanknote(): void
@@ -294,6 +375,37 @@ HTML,
             $notifier,
             new NullEnricher(),
             new NullLogger(),
+        );
+    }
+
+    private static function tirgusDatiHistoryResponse(
+        string $address = 'Brivibas, Rīga',
+        string $rooms = '4',
+        string $area = '90 m²',
+    ): Response {
+        return new Response(
+            body: <<<HTML
+<!doctype html>
+<html lang="lv">
+<head><title>Dzīvoklis — cenu vēsture — Tirgus Dati</title></head>
+<body>
+<article class="listing">
+    <div class="listing-head"><h1>Dzīvoklis pārdošanai</h1></div>
+    <p class="muted">{$address}</p>
+    <dl class="spec-list">
+        <div><dt>Istabas</dt><dd>{$rooms}</dd></div>
+        <div><dt>Platība</dt><dd>{$area}</dd></div>
+    </dl>
+</article>
+<table class="history">
+    <tbody>
+        <tr><td>09.08.2026 19:45</td><td>245 000 EUR</td><td>-5 000 EUR</td><td></td></tr>
+        <tr><td>19.01.2026 12:27</td><td>250 000 EUR</td><td>—</td><td>Sludinājums pievienots</td></tr>
+    </tbody>
+</table>
+</body>
+</html>
+HTML,
         );
     }
 

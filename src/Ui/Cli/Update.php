@@ -19,7 +19,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use function implode;
 use function number_format;
-use function sprintf;
 
 final class Update extends Command
 {
@@ -120,13 +119,22 @@ final class Update extends Command
         $lines[] = '€: ' . number_format($listing->price, thousands_separator: ' ');
 
         if ($enrichment !== null) {
-            $lines[] = sprintf(
-                "€ min: %s\n€ max: %s\nFirst seen: %s\n%s",
-                number_format($enrichment->priceMin, thousands_separator: ' '),
-                number_format($enrichment->priceMax, thousands_separator: ' '),
-                $enrichment->firstSeenAt->format('Y-m-d'),
-                $enrichment->historyUrl,
-            );
+            $lines[] = 'TirgusDati URL history:';
+
+            if ($enrichment->historyMismatch) {
+                $lines[] = '⚠ TirgusDati history appears to belong to a different listing previously using this SS.lv URL.';
+            }
+
+            $lines[] = '€ min: ' . number_format($enrichment->priceMin, thousands_separator: ' ');
+            $lines[] = '€ max: ' . number_format($enrichment->priceMax, thousands_separator: ' ');
+            $lines[] = 'First seen: ' . $enrichment->firstSeenAt->format('Y-m-d');
+            $lines[] = 'Current listing history:';
+            $lines[] = $enrichment->historyUrl;
+
+            foreach ($enrichment->previousHistoryUrls as $previousHistoryUrl) {
+                $lines[] = 'Previous matching listing history:';
+                $lines[] = $previousHistoryUrl;
+            }
         }
 
         return implode("\n", $lines);

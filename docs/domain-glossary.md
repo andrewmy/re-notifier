@@ -19,12 +19,21 @@ apartments, houses, laptops, or headphones. A WatchProfile has exactly one Categ
 house Categories are both real estate.
 _Avoid_: Type, section
 
+**Property**:
+One physical apartment or house. The same Property may be published as multiple Listings over time,
+including Listings with different SS.lv URLs.
+_Avoid_: Listing when referring to the physical real-estate object
+
 **Listing**:
-One item published by SS.lv in a feed. A Listing can be relevant to zero, one, or many WatchProfiles.
-_Avoid_: Ad, item when the meaning is ambiguous
+One publication occurrence exposed by a source. Its URL is a locator, not permanent identity: SS.lv
+may reuse the URL for a later Listing of a different Property. A Listing can be relevant to zero,
+one, or many WatchProfiles.
+_Avoid_: Property, URL when referring to the publication, Ad, item when the meaning is ambiguous
 
 **ListingRevision**:
-One observed content snapshot of a Listing for one WatchProfile. A seen ListingRevision is skipped
+One observed content snapshot of a Listing for one WatchProfile. A changed price or description may
+produce another ListingRevision. A URL containing incompatible Property fields begins a different
+Listing rather than another revision of the original Listing. A seen ListingRevision is skipped
 for that WatchProfile; a changed ListingRevision may notify again, even when the SS.lv URL is
 unchanged.
 _Avoid_: Duplicate, seen ad
@@ -39,10 +48,13 @@ Dev: "If the same SS.lv item matches two WatchProfiles, is it one notification o
 
 Domain expert: "Two. Relevance belongs to the WatchProfile, not only to the SS.lv item."
 
-Dev: "The same SS.lv URL changed price. Is that a new Listing?"
+Dev: "The same SS.lv URL changed price but still describes Valdemāra 39. New Listing?"
 
-Domain expert: "No. It is the same Listing with changed content, and each matching WatchProfile
-decides whether that changed content is new enough to notify."
+Domain expert: "No. Same Listing, new ListingRevision."
+
+Dev: "The same URL now describes Čaka 133 with different rooms and area. New Listing?"
+
+Domain expert: "Yes. SS.lv reused the locator for a different Property."
 
 Dev: "If the same URL has changed content and still matches, should it notify again?"
 

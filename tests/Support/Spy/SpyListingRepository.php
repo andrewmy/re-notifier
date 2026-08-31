@@ -11,8 +11,11 @@ final class SpyListingRepository implements ListingRepository
 {
     public bool $saved = false;
 
-    public function __construct(private readonly bool $seen = false)
-    {
+    /** @param list<string> $previousUrls */
+    public function __construct(
+        private readonly bool $seen = false,
+        private readonly array $previousUrls = [],
+    ) {
     }
 
     public function isSeen(string $watchProfileId, string $url, string $contentHash): bool
@@ -29,5 +32,11 @@ final class SpyListingRepository implements ListingRepository
     public function findRawDescriptionsByUrl(string $url): array
     {
         return [];
+    }
+
+    /** @return list<string> */
+    public function findPreviousUrlsForSameProperty(Listing $listing): array
+    {
+        return $this->previousUrls;
     }
 }

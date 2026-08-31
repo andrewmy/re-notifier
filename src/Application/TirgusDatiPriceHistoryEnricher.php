@@ -6,6 +6,7 @@ namespace App\Application;
 
 use App\Domain\Category;
 use App\Domain\Listing;
+use App\Domain\ListingRepository;
 use Carbon\CarbonImmutable;
 use Carbon\Exceptions\InvalidFormatException;
 use Dom\Element;
@@ -17,6 +18,7 @@ use Psr\Log\LoggerInterface;
 use Webmozart\Assert\Assert;
 use Webmozart\Assert\InvalidArgumentException;
 
+use function array_map;
 use function max;
 use function min;
 use function preg_replace;
@@ -30,6 +32,8 @@ final readonly class TirgusDatiPriceHistoryEnricher implements ListingEnricher
 {
     public function __construct(
         private Client $client,
+        private ListingRepository $listingRepository,
+        private TirgusDatiListingMatcher $listingMatcher,
         private LoggerInterface|null $logger = null,
     ) {
     }
@@ -40,7 +44,7 @@ final readonly class TirgusDatiPriceHistoryEnricher implements ListingEnricher
             return null;
         }
 
-        return $this->fetchHistory($listing->url);
+        return $this->fetchHistory($listing);
     }
 
     private static function supportsCategory(Category $category): bool
@@ -48,9 +52,10 @@ final readonly class TirgusDatiPriceHistoryEnricher implements ListingEnricher
         return $category === Category::Apartment || $category === Category::House;
     }
 
-    private function fetchHistory(string $url): EnrichmentData|null
+    private function fetchHistory(Listing $listing): EnrichmentData|null
     {
-        $historyUrl    = 'https://tirgusdati.lv/vesture?q=' . rawurlencode($url);
+        $url           = $listing->url;
+        $historyUrl    = self::historyUrl($url);
         $statusCode    = null;
         $responseTitle = null;
 
@@ -106,11 +111,18 @@ final readonly class TirgusDatiPriceHistoryEnricher implements ListingEnricher
 
             Assert::notEmpty($dates);
 
+            $previousHistoryUrls = array_map(
+                self::historyUrl(...),
+                $this->listingRepository->findPreviousUrlsForSameProperty($listing),
+            );
+
             return new EnrichmentData(
                 historyUrl: $historyUrl,
                 priceMin: min($prices),
                 priceMax: max($prices),
                 firstSeenAt: min($dates),
+                previousHistoryUrls: $previousHistoryUrls,
+                historyMismatch: $this->listingMatcher->historyBelongsToDifferentListing($listing, $document),
             );
         } catch (GuzzleException | InvalidFormatException | InvalidArgumentException $exception) {
             $message = 'Could not fetch TirgusDati history for ' . $url . ': ' . $exception->getMessage();
@@ -126,5 +138,10 @@ final readonly class TirgusDatiPriceHistoryEnricher implements ListingEnricher
 
             return null;
         }
+    }
+
+    private static function historyUrl(string $listingUrl): string
+    {
+        return 'https://tirgusdati.lv/vesture?q=' . rawurlencode($listingUrl);
     }
 }

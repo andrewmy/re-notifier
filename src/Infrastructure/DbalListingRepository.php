@@ -8,10 +8,12 @@ use App\Domain\Listing;
 use App\Domain\ListingRepository;
 use App\Domain\ListingRevisionCandidate;
 use App\Infrastructure\SsLv\SsLvFieldExtractor;
+use App\Infrastructure\SsLv\SsLvPropertyFingerprint;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 
+use function array_keys;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
@@ -68,6 +70,41 @@ final readonly class DbalListingRepository implements ListingRepository
             'SELECT description, watch_profile_id, stored_at FROM ' . self::TABLE_NAME . ' WHERE url = ? ORDER BY stored_at DESC',
             [$url],
         );
+    }
+
+    /** @return list<string> */
+    public function findPreviousUrlsForSameProperty(Listing $listing): array
+    {
+        $currentFingerprint = SsLvPropertyFingerprint::fromDescription($listing->category, $listing->description);
+        if ($currentFingerprint === null) {
+            return [];
+        }
+
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT url, description FROM ' . self::TABLE_NAME
+            . ' WHERE category = ? ORDER BY stored_at DESC',
+            [$listing->category->value],
+        );
+
+        $matchedUrls = [];
+        foreach ($rows as $row) {
+            $url = (string) $row['url'];
+            if ($url === $listing->url || isset($matchedUrls[$url])) {
+                continue;
+            }
+
+            $storedFingerprint = SsLvPropertyFingerprint::fromDescription(
+                $listing->category,
+                (string) $row['description'],
+            );
+            if ($storedFingerprint !== $currentFingerprint) {
+                continue;
+            }
+
+            $matchedUrls[$url] = true;
+        }
+
+        return array_keys($matchedUrls);
     }
 
     private function migrate(): void

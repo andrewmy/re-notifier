@@ -12,4 +12,7 @@ interface ListingRepository
 
     /** @return list<array<string, mixed>> */
     public function findRawDescriptionsByUrl(string $url): array;
+
+    /** @return list<string> */
+    public function findPreviousUrlsForSameProperty(Listing $listing): array;
 }

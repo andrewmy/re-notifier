@@ -10,6 +10,7 @@ final class SsLvDescription
         string $street = 'Brivibas',
         int $rooms = 4,
         int $space = 90,
+        string $floor = '3/5',
         string $price = '250,000 €',
         string|null $imageUrl = null,
     ): string {
@@ -23,6 +24,7 @@ HTML;
 Iela: <b>{$street}</b><br/>
 Ist.: <b>{$rooms}</b><br/>
 m²: <b>{$space}</b><br/>
+Stāvs: <b>{$floor}</b><br/>
 Cena: <b>{$price}</b>
 HTML;
     }
