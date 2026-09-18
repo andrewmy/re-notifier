@@ -9,7 +9,9 @@ use function preg_match;
 use function preg_quote;
 use function preg_replace;
 use function str_contains;
+use function strip_tags;
 use function strtolower;
+use function trim;
 
 final class HeadphoneCriteria implements Criteria
 {
@@ -39,7 +41,7 @@ final class HeadphoneCriteria implements Criteria
         $title      = (string) ($listing->parsedFields['title'] ?? '');
         $brand      = (string) ($listing->parsedFields['brand'] ?? '');
         $condition  = (string) ($listing->parsedFields['condition'] ?? '');
-        $searchText = $title . "\n" . $listing->description;
+        $searchText = $title . "\n" . self::visibleDescriptionText($listing->description);
         $modelText  = self::normalizeModelText($searchText);
         $brandText  = $brand === '' ? $title : $brand;
 
@@ -86,5 +88,14 @@ final class HeadphoneCriteria implements Criteria
     private static function normalizeModelText(string $text): string
     {
         return (string) preg_replace('/[^\p{L}\p{N}]+/u', '', strtolower($text));
+    }
+
+    private static function visibleDescriptionText(string $description): string
+    {
+        $normalized = preg_replace('/<br\s*\/?>/iu', "\n", $description);
+        $stripped   = strip_tags((string) $normalized);
+        $collapsed  = preg_replace('/[ \t]+/', ' ', $stripped);
+
+        return trim((string) $collapsed);
     }
 }

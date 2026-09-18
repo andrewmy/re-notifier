@@ -98,6 +98,28 @@ final class HeadphoneCriteriaTest extends TestCase
         )));
     }
 
+    public function testDoesNotMatchDigitsFromUrlsInRssHtml(): void
+    {
+        $criteria = new HeadphoneCriteria(modelIncludesAny: ['480']);
+
+        $rssHtml = '<a href="https://www.ss.lv/msg/lv/electronics/audio-video-dvd-sat/audio/headphones/cxldgg.html"><img align=right border=0 src="https://i.ss.lv/gallery/8/1480/369893/73978410.t.jpg" width="174" height="130" alt=""></a>' . "\n"
+            . 'Marka: <b>Apple</b><br/>Stāv.: <b>lietota</b><br/>Cena: <b>80  €</b><br/><br/><b><a href="https://www.ss.lv/msg/lv/electronics/audio-video-dvd-sat/audio/headphones/cxldgg.html">Apskatīt sludinājumu</a></b><br/><br/>';
+
+        self::assertFalse($criteria->matches(self::headphoneListing(
+            brand: 'Apple',
+            condition: 'lietota',
+            title: 'Airpods Pro 2 A3048, Usb-C . Oriģinālās labā stāvoklī.',
+            price: 80,
+            description: $rssHtml,
+        )));
+
+        self::assertTrue($criteria->matches(self::headphoneListing(
+            brand: 'Sennheiser',
+            condition: 'lietota',
+            title: 'Sennheiser HD 480',
+        )));
+    }
+
     public function testRejectsExcludedTermFromDescription(): void
     {
         $criteria = new HeadphoneCriteria(
