@@ -91,7 +91,7 @@ function uploadFileOverSsh(string $localFile, string $remoteFile): void
 
     $host              = currentHost();
     $connectionOptions = array_map(
-        static fn (string $option): string => escapeshellarg($option),
+        escapeshellarg(...),
         $host->connectionOptions(),
     );
     $sshCommand        = 'ssh ' . implode(' ', $connectionOptions) . ' ' . escapeshellarg($host->connectionString());

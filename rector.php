@@ -10,4 +10,4 @@ return RectorConfig::configure()
         __DIR__ . '/app.php',
         __DIR__ . '/deploy.php',
     ])
-    ->withPhpSets(php85: true);
+    ->withPhpSets(php86: true);

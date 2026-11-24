@@ -13,6 +13,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 
+use function array_any;
 use function array_keys;
 use function json_encode;
 use function parse_url;
@@ -53,13 +54,8 @@ final readonly class DbalListingRepository implements ListingRepository
             . ' WHERE watch_profile_id = ? AND url = ? AND description LIKE ?',
             [$watchProfileId, $url, '%<span class="green bold">%'],
         );
-        foreach ($descriptions as $description) {
-            if (ListingRevisionCandidate::contentHash(SsLvFieldExtractor::withoutPriceHighlight((string) $description)) === $contentHash) {
-                return true;
-            }
-        }
 
-        return false;
+        return array_any($descriptions, static fn ($description) => ListingRevisionCandidate::contentHash(SsLvFieldExtractor::withoutPriceHighlight((string) $description)) === $contentHash);
     }
 
     public function save(Listing $listing, string $watchProfileId, string $contentHash): void
