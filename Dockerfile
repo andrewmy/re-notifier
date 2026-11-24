@@ -1,6 +1,6 @@
 FROM php:8.5.9-cli-alpine AS builder
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.11.2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
