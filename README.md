@@ -58,9 +58,13 @@ The container runs a cron job every 5 minutes to check for new ads, the schedule
 ### Without Deployer
 
 1. Copy `docker-compose.yml` and `crontab` to your server
+
 2. Create a `.env` file with the required variables, see `.env.dist`
+
 3. Create a `var/` directory for the SQLite database
+
 4. Copy `config/watch_profiles.example.php` to `config/watch_profiles.local.php` and adjust
+
 5. Start the container:
 
    ```shell
