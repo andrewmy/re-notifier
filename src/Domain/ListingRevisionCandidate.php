@@ -15,14 +15,6 @@ final readonly class ListingRevisionCandidate
     ) {
     }
 
-    public static function fromListing(Listing $listing): self
-    {
-        return new self(
-            listing: $listing,
-            contentHash: self::contentHash($listing->description),
-        );
-    }
-
     public static function contentHash(string $content): string
     {
         return md5(str_replace("\n", '', $content));

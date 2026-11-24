@@ -15,8 +15,10 @@ use Doctrine\DBAL\Tools\DsnParser;
 
 use function array_keys;
 use function json_encode;
+use function parse_url;
 
 use const JSON_THROW_ON_ERROR;
+use const PHP_URL_HOST;
 
 final readonly class DbalListingRepository implements ListingRepository
 {
@@ -37,7 +39,27 @@ final readonly class DbalListingRepository implements ListingRepository
             [$watchProfileId, $url, $contentHash],
         );
 
-        return $id !== false;
+        if ($id !== false) {
+            return true;
+        }
+
+        if (parse_url($url, PHP_URL_HOST) !== 'www.ss.lv') {
+            return false;
+        }
+
+        // Older SS.lv rows hashed the description with the price highlight still present.
+        $descriptions = $this->db->fetchFirstColumn(
+            'SELECT description FROM ' . self::TABLE_NAME
+            . ' WHERE watch_profile_id = ? AND url = ? AND description LIKE ?',
+            [$watchProfileId, $url, '%<span class="green bold">%'],
+        );
+        foreach ($descriptions as $description) {
+            if (ListingRevisionCandidate::contentHash(SsLvFieldExtractor::withoutPriceHighlight((string) $description)) === $contentHash) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function save(Listing $listing, string $watchProfileId, string $contentHash): void

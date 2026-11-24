@@ -17,6 +17,15 @@ use function trim;
 
 final readonly class SsLvFieldExtractor
 {
+    public static function withoutPriceHighlight(string $description): string
+    {
+        return (string) preg_replace(
+            '/(Cena: <b>)<span class="green bold">([0-9, ]+)<\/span>/',
+            '$1$2',
+            $description,
+        );
+    }
+
     public static function toPlainText(string $description): string
     {
         $normalized = preg_replace('/<br\s*\/?>/iu', "\n", $description);

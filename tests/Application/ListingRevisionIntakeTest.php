@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Uid\Ulid;
 
+use function array_column;
 use function basename;
 
 final class ListingRevisionIntakeTest extends TestCase
@@ -43,7 +44,10 @@ final class ListingRevisionIntakeTest extends TestCase
             {
                 $this->sourceUrls[] = $sourceUrl;
 
-                return [new ListingRevisionCandidate($this->listing, 'hash-' . basename($sourceUrl))];
+                return [
+                    new ListingRevisionCandidate($this->listing, 'shared-hash'),
+                    new ListingRevisionCandidate($this->listing, 'hash-' . basename($sourceUrl)),
+                ];
             }
         };
         $intake      = new ListingRevisionIntake($source, new SpyListingRepository(), new NullLogger());
@@ -51,7 +55,7 @@ final class ListingRevisionIntakeTest extends TestCase
         $revisions = $intake->pendingRevisions($profile);
 
         self::assertSame(['https://example.com/a.xml', 'https://example.com/b.xml'], $source->sourceUrls);
-        self::assertCount(2, $revisions);
+        self::assertSame(['shared-hash', 'hash-a.xml', 'hash-b.xml'], array_column($revisions, 'contentHash'));
     }
 
     public function testMatchingUnseenListingRevisionIsReturnedForWatchProfile(): void

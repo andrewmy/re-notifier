@@ -70,13 +70,14 @@ final readonly class SsLvListingRevisionSource implements SelectableListingRevis
             $url         = (string) $item->link;
             $description = (string) $item->description;
 
-            $candidates[] = ListingRevisionCandidate::fromListing(
-                $parser->parse(new SsLvRssItem(
+            $candidates[] = new ListingRevisionCandidate(
+                listing: $parser->parse(new SsLvRssItem(
                     publishedAt: (string) $item->pubDate,
                     url: $url,
                     description: $description,
                     title: (string) ($item->title ?? ''),
                 )),
+                contentHash: ListingRevisionCandidate::contentHash(SsLvFieldExtractor::withoutPriceHighlight($description)),
             );
         }
 

@@ -23,6 +23,7 @@ final readonly class ListingRevisionIntake
     public function pendingRevisions(WatchProfile $watchProfile): array
     {
         $revisions = [];
+        $queued    = [];
 
         foreach ($watchProfile->sourceUrls as $sourceUrl) {
             foreach ($this->source->candidates($watchProfile, $sourceUrl) as $candidate) {
@@ -40,7 +41,10 @@ final readonly class ListingRevisionIntake
                     continue;
                 }
 
-                if ($this->listingRepository->isSeen($watchProfile->id, $listing->url, $candidate->contentHash)) {
+                if (
+                    isset($queued[$listing->url][$candidate->contentHash])
+                    || $this->listingRepository->isSeen($watchProfile->id, $listing->url, $candidate->contentHash)
+                ) {
                     $this->logger->debug('Listing revision already seen', [
                         'url' => $listing->url,
                         'profile' => $watchProfile->id,
@@ -50,10 +54,8 @@ final readonly class ListingRevisionIntake
                     continue;
                 }
 
-                $revisions[] = new ListingRevisionCandidate(
-                    listing: $listing,
-                    contentHash: $candidate->contentHash,
-                );
+                $queued[$listing->url][$candidate->contentHash] = true;
+                $revisions[]                                    = $candidate;
             }
         }
 

@@ -10,10 +10,15 @@ use App\Application\TirgusDatiListingMatcher;
 use App\Application\TirgusDatiPriceHistoryEnricher;
 use App\Domain\Category;
 use App\Domain\LaptopCriteria;
+use App\Domain\ListingRepository;
+use App\Domain\ListingRevisionCandidate;
 use App\Domain\WatchProfile;
 use App\Infrastructure\Banknote\BanknoteInventoryRevisionSource;
+use App\Infrastructure\DbalListingRepository;
 use App\Infrastructure\ListingRevisionSourceRouter;
+use App\Infrastructure\SsLv\ApartmentParser;
 use App\Infrastructure\SsLv\SsLvListingRevisionSource;
+use App\Infrastructure\SsLv\SsLvRssItem;
 use App\Tests\Support\Spy\NullEnricher;
 use App\Tests\Support\Spy\SpyListingRepository;
 use App\Tests\Support\Spy\SpyNotifier;
@@ -32,6 +37,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 use function json_encode;
 use function rawurlencode;
+use function str_replace;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -103,6 +109,30 @@ final class UpdateSmokeTest extends TestCase
         self::assertSame(0, $enricher->calls);
         self::assertFalse($repo->saved);
         self::assertEmpty($notifier->messages);
+    }
+
+    public function testPriceHighlightIsSkippedButPriceChangeNotifies(): void
+    {
+        $profile     = SsLvFixtures::apartmentProfile();
+        $url         = 'https://www.ss.lv/msg/lv/real-estate/flats/riga/mezhapark/lemih.html';
+        $plain       = SsLvDescription::apartment(rooms: 5, space: 149, price: '255,000  €');
+        $highlighted = str_replace('255,000', '<span class="green bold">255,000</span>', $plain);
+        $reduced     = str_replace('255,000', '249,000', $highlighted);
+        $repo        = new DbalListingRepository('pdo-sqlite:///:memory:');
+        $notifier    = new SpyNotifier();
+
+        // Seed an existing row using the stored raw-description hash.
+        $original = new ApartmentParser()->parse(new SsLvRssItem('2026-09-11 10:11:38', $url, $highlighted));
+        $repo->save($original, $profile->id, ListingRevisionCandidate::contentHash($highlighted));
+
+        foreach ([$plain, $highlighted, $reduced] as $description) {
+            $command = self::createCommand($profile, SsLvFixtures::rssFeed($description, $url), $repo, $notifier);
+            self::assertSame(0, self::runCommand($command));
+        }
+
+        self::assertCount(1, $notifier->messages);
+        self::assertStringContainsString('€: 249 000', $notifier->messages[0]);
+        self::assertCount(2, $repo->findRawDescriptionsByUrl($url));
     }
 
     public function testZeroPriceListingStillNotifiesAndSaves(): void
@@ -324,7 +354,7 @@ HTML,
     private static function createCommand(
         WatchProfile $profile,
         Response $rssResponse,
-        SpyListingRepository $repo,
+        ListingRepository $repo,
         SpyNotifier $notifier,
         ListingEnricher|null $enricher = null,
     ): Update {
