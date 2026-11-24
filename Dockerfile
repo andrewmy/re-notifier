@@ -1,4 +1,4 @@
-FROM php:8.5.9-cli-alpine AS builder
+FROM php:8.6.0-cli-alpine AS builder
 
 COPY --from=composer:2.11.2 /usr/bin/composer /usr/bin/composer
 
@@ -8,7 +8,7 @@ COPY composer.json composer.lock ./
 
 RUN composer install --no-dev --no-interaction --optimize-autoloader --no-cache
 
-FROM php:8.5.9-cli-alpine
+FROM php:8.6.0-cli-alpine
 
 LABEL org.opencontainers.image.source="https://github.com/andrewmy/re-notifier"
 

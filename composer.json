@@ -3,7 +3,7 @@
     "type": "project",
     "description": "Real Estate ad notifier",
     "require": {
-        "php": "^8.5",
+        "php": "^8.6",
         "ext-dom": "*",
         "ext-libxml": "*",
         "ext-simplexml": "*",
